@@ -10,28 +10,17 @@ import {
   Search,
   ZoomIn,
   ZoomOut,
-  Plus,
-  ChevronRight,
-  X,
   Play,
   Pause,
-  Navigation,
 } from "lucide-react";
 import { JournalEntry, JournalLocation } from "../types";
-import { DEFAULT_CATEGORIES, POPULAR_LOCATIONS } from "../data/initialData";
+import { DEFAULT_CATEGORIES } from "../data/initialData";
+import { MemoryCarousel, LocationGroup } from "./MemoryCarousel";
 
 interface MemoryGlobeProps {
   entries: JournalEntry[];
   onSelectEntry: (entry: JournalEntry) => void;
   onNewEntryWithLocation: (location: JournalLocation) => void;
-}
-
-interface LocationGroup {
-  name: string;
-  country?: string;
-  latitude: number;
-  longitude: number;
-  entries: JournalEntry[];
 }
 
 export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
@@ -124,7 +113,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     if (!containerRef.current) return;
     const container = containerRef.current;
     const width = container.clientWidth;
-    const height = container.clientHeight || 580;
+    const height = container.clientHeight || 560;
 
     // Scene with clean white background
     const scene = new THREE.Scene();
@@ -338,7 +327,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight || 580;
+      const h = containerRef.current.clientHeight || 560;
       cameraRef.current.aspect = w / h;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(w, h);
@@ -422,8 +411,8 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
       markerContainer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), position.clone().normalize());
 
       // 1. Core Pin Sphere
-      const pinGeometry = new THREE.SphereGeometry(2.0, 16, 16);
       const isSelected = activeLocation?.name === group.name;
+      const pinGeometry = new THREE.SphereGeometry(2.0, 16, 16);
       const pinMaterial = new THREE.MeshBasicMaterial({
         color: isSelected ? 0xec4899 : 0xdb2777,
       });
@@ -509,8 +498,11 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     }
   };
 
+  // Selected Location for Carousel (default to first location group if none active)
+  const currentCarouselLocation = activeLocation || (filteredLocationGroups.length > 0 ? filteredLocationGroups[0] : null);
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto text-purple-950 font-sans">
+    <div className="space-y-8 max-w-7xl mx-auto text-purple-950 font-sans">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-pink-200/60">
         <div>
@@ -557,13 +549,12 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
       </div>
 
       {/* Main 3D Canvas Card with Pristine White Background */}
-      <div className="relative rounded-[36px] bg-white border border-pink-200/80 shadow-xl overflow-hidden min-h-[560px] flex flex-col md:flex-row">
+      <div className="relative rounded-[36px] bg-white border border-pink-200/80 shadow-xl overflow-hidden min-h-[520px] sm:min-h-[580px] flex flex-col">
         {/* Soft Radial Ambient Glow behind the Globe */}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_45%_50%,rgba(240,249,255,0.8)_0%,rgba(255,245,250,0.5)_50%,rgba(255,255,255,1)_100%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(240,249,255,0.8)_0%,rgba(255,245,250,0.5)_50%,rgba(255,255,255,1)_100%)]" />
 
-        {/* Left / Main 3D Interactive Canvas */}
-        <div className="relative flex-1 min-h-[480px] md:min-h-[580px]">
-          {/* Canvas container */}
+        {/* 3D Interactive Canvas Container */}
+        <div className="relative w-full h-[520px] sm:h-[580px]">
           <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
           {/* Floating HUD Controls */}
@@ -611,7 +602,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
 
           {/* Hover tooltip */}
           {hoveredLocation && !activeLocation && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
+            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
               <div className="px-4 py-2 rounded-2xl bg-purple-950/90 backdrop-blur-md text-white text-xs font-serif shadow-xl flex items-center gap-2 border border-pink-300/30">
                 <MapPin className="w-3.5 h-3.5 text-pink-400" />
                 <span className="font-bold">{hoveredLocation.name}</span>
@@ -623,15 +614,15 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
             </div>
           )}
 
-          {/* Quick Location Selection Pills */}
-          <div className="absolute bottom-4 left-4 right-4 z-20 overflow-x-auto pb-1 flex items-center gap-2 scrollbar-none">
+          {/* Location Pins Quick Selector Bar */}
+          <div className="absolute bottom-4 left-4 right-4 z-20 overflow-x-auto pb-1 flex items-center justify-center gap-2 scrollbar-none">
             {filteredLocationGroups.map((loc) => (
               <button
                 key={loc.name}
                 onClick={() => focusOnLocation(loc)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                  activeLocation?.name === loc.name
-                    ? "bg-purple-950 text-white ring-2 ring-pink-400 font-bold"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                  currentCarouselLocation?.name === loc.name
+                    ? "bg-purple-950 text-white ring-2 ring-pink-400 font-bold scale-102"
                     : "bg-white/95 text-purple-950 hover:bg-pink-50 border border-pink-200/80"
                 }`}
               >
@@ -643,162 +634,18 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
             ))}
           </div>
         </div>
-
-        {/* Right Side Drawer / Active Location Memory Sheet */}
-        {activeLocation && (
-          <div className="w-full md:w-96 bg-white/95 backdrop-blur-xl border-t md:border-t-0 md:border-l border-pink-200/80 p-6 flex flex-col justify-between max-h-[580px] overflow-y-auto animate-slide-in-right z-30">
-            <div>
-              {/* Header */}
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-pink-200/60">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-lg font-bold text-purple-950 leading-tight">
-                      {activeLocation.name}
-                    </h3>
-                    <p className="text-[11px] text-purple-900/60 font-serif">
-                      {activeLocation.country || "Earth"} • {activeLocation.latitude.toFixed(2)}°,{" "}
-                      {activeLocation.longitude.toFixed(2)}°
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setActiveLocation(null)}
-                  className="text-purple-400 hover:text-purple-900 p-1.5 rounded-full hover:bg-pink-50 text-xs cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Memory entries list for this city */}
-              <div className="space-y-3 mb-6">
-                <div className="text-[10px] uppercase font-bold tracking-widest text-pink-500">
-                  Journals in {activeLocation.name} ({activeLocation.entries.length})
-                </div>
-
-                {activeLocation.entries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    onClick={() => onSelectEntry(entry)}
-                    className="p-3 rounded-2xl bg-pink-50/50 hover:bg-pink-100/60 border border-pink-200/60 hover:border-pink-400/80 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between text-[11px] text-purple-900/60 mb-1">
-                      <span className="font-serif italic">{entry.date}</span>
-                      <span>
-                        {entry.moodEmoji} {entry.mood}
-                      </span>
-                    </div>
-
-                    <h4 className="font-serif text-sm font-bold text-purple-950 group-hover:text-pink-600 transition-colors line-clamp-1">
-                      {entry.title || "Untitled Memory"}
-                    </h4>
-
-                    {entry.media && entry.media.length > 0 && (
-                      <div className="mt-2 rounded-xl overflow-hidden h-24 w-full bg-purple-100">
-                        <img
-                          src={entry.media[0].url}
-                          alt={entry.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-
-                    <p className="text-xs text-purple-900/80 line-clamp-2 mt-1.5 font-serif">{entry.content}</p>
-
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-pink-200/60 text-[10px] text-pink-600 font-bold">
-                      <span>Open in Diary</span>
-                      <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* CTA: Write journal at this location */}
-            <div className="pt-3 border-t border-pink-200/60">
-              <button
-                onClick={() => {
-                  onNewEntryWithLocation({
-                    name: activeLocation.name,
-                    country: activeLocation.country,
-                    latitude: activeLocation.latitude,
-                    longitude: activeLocation.longitude,
-                  });
-                }}
-                className="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Write Journal in {activeLocation.name}</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Popular Locations Quick Picker */}
-      <div className="p-6 rounded-[28px] bg-white border border-pink-200/70 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Navigation className="w-4 h-4 text-pink-500" />
-            <h3 className="font-serif font-bold text-base text-purple-950">
-              Popular Global Destinations
-            </h3>
-          </div>
-          <span className="text-xs text-purple-900/60 font-serif">
-            Click to rotate Earth & locate
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
-          {POPULAR_LOCATIONS.map((dest) => {
-            const hasMemory = locationGroups.some(
-              (g) => g.name.toLowerCase() === dest.name.toLowerCase()
-            );
-
-            return (
-              <button
-                key={dest.name}
-                onClick={() => {
-                  const existing = locationGroups.find(
-                    (g) => g.name.toLowerCase() === dest.name.toLowerCase()
-                  );
-                  if (existing) {
-                    focusOnLocation(existing);
-                  } else {
-                    focusOnLocation({
-                      name: dest.name,
-                      country: dest.country,
-                      latitude: dest.latitude,
-                      longitude: dest.longitude,
-                      entries: [],
-                    });
-                  }
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer group ${
-                  hasMemory
-                    ? "bg-pink-50/70 border-pink-300/80 hover:bg-pink-100"
-                    : "bg-white border-pink-100 hover:border-pink-300 hover:bg-pink-50/40"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base">📍</span>
-                  {hasMemory && (
-                    <span className="w-2 h-2 rounded-full bg-pink-500 shadow-xs" />
-                  )}
-                </div>
-                <div className="font-serif font-bold text-xs text-purple-950 group-hover:text-pink-600 mt-1 truncate">
-                  {dest.name}
-                </div>
-                <div className="text-[10px] text-purple-900/60 truncate">
-                  {dest.country}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* Upgraded Center-Focused Memory Carousel Section (Directly Beneath 3D Globe) */}
+      <div id="memory-globe-carousel-container" className="w-full">
+        <MemoryCarousel
+          location={currentCarouselLocation}
+          entries={currentCarouselLocation ? currentCarouselLocation.entries : []}
+          onSelectEntry={onSelectEntry}
+          onNewEntryWithLocation={onNewEntryWithLocation}
+        />
       </div>
     </div>
   );
 };
+
