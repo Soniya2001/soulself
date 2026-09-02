@@ -14,10 +14,16 @@ export const DEFAULT_CATEGORIES = [
 ];
 
 export const POPULAR_LOCATIONS: JournalLocation[] = [
+  { name: "Madurai", country: "India", latitude: 9.9252, longitude: 78.1198 },
   { name: "Chennai", country: "India", latitude: 13.0827, longitude: 80.2707 },
   { name: "Bangalore", country: "India", latitude: 12.9716, longitude: 77.5946 },
+  { name: "Coimbatore", country: "India", latitude: 11.0168, longitude: 76.9558 },
   { name: "Mumbai", country: "India", latitude: 19.076, longitude: 72.8777 },
   { name: "Delhi", country: "India", latitude: 28.6139, longitude: 77.209 },
+  { name: "Hyderabad", country: "India", latitude: 17.385, longitude: 78.4867 },
+  { name: "Kolkata", country: "India", latitude: 22.5726, longitude: 88.3639 },
+  { name: "Kochi", country: "India", latitude: 9.9312, longitude: 76.2673 },
+  { name: "Goa", country: "India", latitude: 15.2993, longitude: 74.124 },
   { name: "Singapore", country: "Singapore", latitude: 1.3521, longitude: 103.8198 },
   { name: "Tokyo", country: "Japan", latitude: 35.6762, longitude: 139.6503 },
   { name: "Kyoto", country: "Japan", latitude: 35.0116, longitude: 135.7681 },

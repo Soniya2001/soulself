@@ -45,12 +45,22 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   const [hoveredLocation, setHoveredLocation] = useState<LocationGroup | null>(null);
 
 const CITY_COORDINATES: Record<string, { lat: number; lng: number; country?: string }> = {
+  madurai: { lat: 9.9252, lng: 78.1198, country: "India" },
   chennai: { lat: 13.0827, lng: 80.2707, country: "India" },
   bangalore: { lat: 12.9716, lng: 77.5946, country: "India" },
   bengaluru: { lat: 12.9716, lng: 77.5946, country: "India" },
+  coimbatore: { lat: 11.0168, lng: 76.9558, country: "India" },
   mumbai: { lat: 19.076, lng: 72.8777, country: "India" },
   delhi: { lat: 28.6139, lng: 77.209, country: "India" },
   newdelhi: { lat: 28.6139, lng: 77.209, country: "India" },
+  hyderabad: { lat: 17.385, lng: 78.4867, country: "India" },
+  kolkata: { lat: 22.5726, lng: 88.3639, country: "India" },
+  kochi: { lat: 9.9312, lng: 76.2673, country: "India" },
+  trivandrum: { lat: 8.5241, lng: 76.9366, country: "India" },
+  thiruvananthapuram: { lat: 8.5241, lng: 76.9366, country: "India" },
+  goa: { lat: 15.2993, lng: 74.124, country: "India" },
+  jaipur: { lat: 26.9124, lng: 75.7873, country: "India" },
+  ahmedabad: { lat: 23.0225, lng: 72.5714, country: "India" },
   singapore: { lat: 1.3521, lng: 103.8198, country: "Singapore" },
   tokyo: { lat: 35.6762, lng: 139.6503, country: "Japan" },
   kyoto: { lat: 35.0116, lng: 135.7681, country: "Japan" },
