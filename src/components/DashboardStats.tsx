@@ -113,12 +113,12 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ entries }) => {
       {/* 4. Overall Emotional Tone Card */}
       <div
         id="stat-card-emotional-tone"
-        className="bg-pink-50/90 backdrop-blur-md p-5 rounded-3xl border border-pink-100/90 shadow-inner flex flex-col items-center text-center group"
+        className="bg-white/70 backdrop-blur-md p-5 rounded-3xl border border-white/90 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center text-center group"
       >
         <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">
           {emotionInfo.emoji}
         </span>
-        <span className="text-base font-bold block text-pink-600 font-serif truncate max-w-full mb-1">
+        <span className="text-lg sm:text-xl font-bold block text-purple-950 font-serif truncate max-w-full mb-1">
           {emotionInfo.tone}
         </span>
         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-950/60">
