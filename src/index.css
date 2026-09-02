@@ -49,12 +49,10 @@
   font-weight: 700;
 }
 
-/* Notebook lined paper pattern */
-.diary-paper-lined {
-  background-color: #FEFCFB;
-  background-image: linear-gradient(#F3E8EE 1px, transparent 1px);
-  background-size: 100% 2.2rem;
-  line-height: 2.2rem;
+/* Unruled clean diary paper pattern */
+.diary-paper-lined, .diary-paper-unruled {
+  background-color: #FFFDFB;
+  background-image: none;
 }
 
 /* Subtle diary paper texture */

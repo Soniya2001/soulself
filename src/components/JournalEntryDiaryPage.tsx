@@ -329,9 +329,6 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
       {/* Decorative Washi Tape Accent */}
       <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-28 h-5 bg-pink-200/70 backdrop-blur-xs opacity-90 rotate-1 rounded-xs pointer-events-none shadow-2xs z-10 border border-pink-300/40" />
 
-      {/* Red margin guideline on lined paper */}
-      <div className="absolute left-8 sm:left-12 top-0 bottom-0 w-[1.5px] bg-rose-300/40 pointer-events-none" />
-
       {/* Interactive Placed Stickers */}
       {(formData.stickers || []).map((st) => (
         <InteractiveSticker

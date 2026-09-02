@@ -273,9 +273,6 @@ export const BucketListDiaryPage: React.FC<BucketListDiaryPageProps> = ({
       {/* Ribbon Bookmark visual in corner */}
       <div className="absolute top-0 right-10 w-5 h-12 bg-gradient-to-b from-purple-400 to-indigo-400 rounded-b-md shadow-sm pointer-events-none z-10 opacity-85" />
 
-      {/* Red margin guideline on lined paper */}
-      <div className="absolute left-8 sm:left-12 top-0 bottom-0 w-[1.5px] bg-rose-300/40 pointer-events-none" />
-
       {/* Interactive Placed Stickers */}
       {(listData.stickers || []).map((st) => (
         <InteractiveSticker

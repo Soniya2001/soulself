@@ -568,11 +568,6 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({
               isLinedPaper ? "diary-paper-lined" : "diary-paper-texture"
             }`}
           >
-            {/* Red left margin line like classic lined diary journals */}
-            {isLinedPaper && (
-              <div className="absolute left-10 sm:left-14 top-0 bottom-0 w-[1.5px] bg-rose-300/50 pointer-events-none" />
-            )}
-
             {/* Bookmark ribbon visual on top */}
             <div className="absolute top-0 right-10 w-6 h-14 bg-gradient-to-b from-purple-400 via-pink-400 to-pink-500 rounded-b-md shadow-md pointer-events-none z-10 opacity-90" />
 
