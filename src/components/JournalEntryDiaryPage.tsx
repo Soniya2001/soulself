@@ -30,6 +30,8 @@ import {
   detectCurrentLocation,
   savePreferredLocation,
   geocodeLocation,
+  searchLocationsDynamic,
+  LocationSearchResult,
 } from "../utils/location";
 
 interface JournalEntryDiaryPageProps {
@@ -65,6 +67,43 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
   const [isLocationPopoverOpen, setIsLocationPopoverOpen] = useState(false);
   const [customLocationText, setCustomLocationText] = useState("");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
+  // Requirement 3, 4, 12: Real-time debounced location search autocomplete
+  useEffect(() => {
+    if (customLocationText.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearchingLocation(true);
+      const results = await searchLocationsDynamic(customLocationText.trim());
+      setSearchResults(results);
+      setIsSearchingLocation(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [customLocationText]);
+
+  const handleSelectSearchResult = (result: LocationSearchResult) => {
+    const resolved: JournalLocation = {
+      name: result.displayName,
+      country: result.country || "Earth",
+      latitude: result.latitude,
+      longitude: result.longitude,
+    };
+    const next = { ...formData, location: resolved };
+    setFormData(next);
+    savePreferredLocation(resolved);
+    setCustomLocationText("");
+    setSearchResults([]);
+    setIsLocationPopoverOpen(false);
+    audioManager.playGentleTap();
+    if (!isEditing) {
+      onSave(next);
+    }
+    showToast(`Location updated to ${result.displayName} 📍`);
+  };
 
   // Undo histories
   const [stickerHistory, setStickerHistory] = useState<StickerPlacement[][]>([]);
@@ -435,6 +474,21 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                       </button>
                     </div>
 
+                    {/* Confirmation Badge for Selected Location */}
+                    {formData.location && (
+                      <div className="mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 font-serif shadow-xs">
+                        <div className="font-bold text-emerald-900 flex items-center gap-1.5 mb-1">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{formData.location.name}</span>
+                        </div>
+                        {typeof formData.location.latitude === "number" && typeof formData.location.longitude === "number" && (
+                          <div className="text-[11px] font-mono text-emerald-800/90">
+                            Latitude: {formData.location.latitude.toFixed(4)}° · Longitude: {formData.location.longitude.toFixed(4)}°
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* GPS Detection */}
                     <button
                       type="button"
@@ -455,7 +509,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                       )}
                     </button>
 
-                    {/* Custom Location input */}
+                    {/* Custom Location Search */}
                     <form onSubmit={handleCustomLocationSubmit} className="mb-3">
                       <label className="text-[11px] uppercase font-bold text-purple-900/60 block mb-1">
                         Type any city or place name:
@@ -465,17 +519,46 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                           type="text"
                           value={customLocationText}
                           onChange={(e) => setCustomLocationText(e.target.value)}
-                          placeholder="e.g. Madurai, Paris, Tokyo..."
+                          placeholder="Type Madurai, Tokyo, Paris..."
                           className="flex-1 px-3.5 py-2 rounded-xl bg-pink-50/60 border border-pink-200/80 text-xs text-purple-950 placeholder:text-purple-400 focus:outline-none focus:ring-1 focus:ring-pink-400"
                         />
                         <button
                           type="submit"
                           className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
                         >
-                          Set
+                          Search
                         </button>
                       </div>
                     </form>
+
+                    {/* Real-Time Dynamic Search Autocomplete Candidates */}
+                    {isSearchingLocation && (
+                      <div className="py-2 text-center text-xs font-serif text-pink-600 flex items-center justify-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-600" />
+                        <span>Searching global geocoding registry...</span>
+                      </div>
+                    )}
+
+                    {searchResults.length > 0 && (
+                      <div className="mb-3 max-h-44 overflow-y-auto bg-white rounded-2xl border border-pink-200 p-1.5 shadow-md space-y-1 custom-scrollbar">
+                        <div className="px-2 py-1 text-[10px] uppercase font-bold text-purple-900/60">
+                          Select your exact location match:
+                        </div>
+                        {searchResults.map((res, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSelectSearchResult(res)}
+                            className="w-full text-left p-2 rounded-xl text-xs hover:bg-pink-50 text-purple-950 flex flex-col cursor-pointer transition-colors border border-transparent hover:border-pink-200"
+                          >
+                            <span className="font-bold text-purple-950">📍 {res.displayName}</span>
+                            <span className="text-[10px] font-mono text-purple-900/60">
+                              Lat: {res.latitude.toFixed(4)}° · Lon: {res.longitude.toFixed(4)}°
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Worldwide Quick Suggestions */}
                     <div className="text-[11px] uppercase font-bold text-purple-900/60 mb-1.5">

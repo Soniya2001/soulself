@@ -1,8 +1,17 @@
 import * as THREE from "three";
-import { JournalLocation } from "../types";
+import { JournalLocation, JournalEntry } from "../types";
 import { POPULAR_LOCATIONS } from "../data/initialData";
 
 const LOCATION_STORAGE_KEY = "soulself_user_preferred_location";
+
+export interface LocationSearchResult {
+  displayName: string;
+  name: string;
+  state?: string;
+  country?: string;
+  latitude: number;
+  longitude: number;
+}
 
 /**
  * Single Reusable Spherical to 3D Cartesian Conversion Function.
@@ -49,61 +58,63 @@ export function latitudeLongitudeToGlobePosition(
 }
 
 /**
- * Fully Dynamic Geocoding Service.
- * Resolves ANY user-provided location string into an accurate lat/lng location object
- * using real-time online geocoding APIs (Open-Meteo & Nominatim).
- *
- * Does NOT use hardcoded city lookup tables or static fallback coordinates.
+ * Real-Time Dynamic Location Search Autocomplete Service.
+ * Fetches structured search result candidates with actual provider lat/lng coordinates.
  */
-export async function geocodeLocation(query: string): Promise<JournalLocation> {
+export async function searchLocationsDynamic(query: string): Promise<LocationSearchResult[]> {
   const trimmed = query.trim();
-  if (!trimmed) {
-    throw new Error("Please enter a valid place or city name.");
-  }
+  if (trimmed.length < 2) return [];
 
-  // 1. Try Open-Meteo Geocoding API (Fast, global, free, CORS-friendly)
+  // 1. Primary: Open-Meteo Geocoding API
   try {
     const res = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
         trimmed
-      )}&count=5&language=en&format=json`
+      )}&count=8&language=en&format=json`
     );
     if (res.ok) {
       const data = await res.json();
-      if (data.results && data.results.length > 0) {
-        const item = data.results[0];
-        const lat = Number(item.latitude);
-        const lon = Number(item.longitude);
+      if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+        return data.results
+          .map((item: any) => {
+            const lat = Number(item.latitude);
+            const lon = Number(item.longitude);
 
-        if (
-          Number.isFinite(lat) &&
-          Number.isFinite(lon) &&
-          lat >= -90 &&
-          lat <= 90 &&
-          lon >= -180 &&
-          lon <= 180
-        ) {
-          const stateStr = item.admin1 ? `${item.admin1}, ` : "";
-          const countryStr = item.country || "Earth";
-          return {
-            name: `${item.name}, ${stateStr}${countryStr}`,
-            country: countryStr,
-            latitude: Math.round(lat * 10000) / 10000,
-            longitude: Math.round(lon * 10000) / 10000,
-          };
-        }
+            if (
+              Number.isFinite(lat) &&
+              Number.isFinite(lon) &&
+              lat >= -90 &&
+              lat <= 90 &&
+              lon >= -180 &&
+              lon <= 180
+            ) {
+              const stateStr = item.admin1 ? `${item.admin1}, ` : "";
+              const countryStr = item.country || "Earth";
+              const displayName = `${item.name}, ${stateStr}${countryStr}`;
+              return {
+                displayName,
+                name: item.name,
+                state: item.admin1,
+                country: item.country,
+                latitude: Math.round(lat * 10000) / 10000,
+                longitude: Math.round(lon * 10000) / 10000,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean) as LocationSearchResult[];
       }
     }
   } catch (err) {
-    console.warn("Open-Meteo geocoding request failed, trying fallback...", err);
+    console.warn("Open-Meteo search failed, trying Nominatim...", err);
   }
 
-  // 2. Fallback to OpenStreetMap Nominatim API
+  // 2. Fallback: Nominatim API
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
         trimmed
-      )}&limit=1&addressdetails=1`,
+      )}&limit=8&addressdetails=1`,
       {
         headers: {
           "Accept-Language": "en",
@@ -113,37 +124,70 @@ export async function geocodeLocation(query: string): Promise<JournalLocation> {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        const item = data[0];
-        const lat = Number(item.lat);
-        const lon = Number(item.lon);
+        return data
+          .map((item: any) => {
+            const lat = Number(item.lat);
+            const lon = Number(item.lon);
 
-        if (
-          Number.isFinite(lat) &&
-          Number.isFinite(lon) &&
-          lat >= -90 &&
-          lat <= 90 &&
-          lon >= -180 &&
-          lon <= 180
-        ) {
-          const addr = item.address || {};
-          const cityName =
-            addr.city || addr.town || addr.village || addr.suburb || addr.county || item.name || trimmed;
-          const countryName = addr.country || "Earth";
+            if (
+              Number.isFinite(lat) &&
+              Number.isFinite(lon) &&
+              lat >= -90 &&
+              lat <= 90 &&
+              lon >= -180 &&
+              lon <= 180
+            ) {
+              const addr = item.address || {};
+              const cityName =
+                addr.city || addr.town || addr.village || addr.suburb || addr.county || item.name || trimmed;
+              const stateName = addr.state || "";
+              const countryName = addr.country || "Earth";
+              const displayName = `${cityName}${stateName ? `, ${stateName}` : ""}, ${countryName}`;
 
-          return {
-            name: `${cityName}, ${countryName}`,
-            country: countryName,
-            latitude: Math.round(lat * 10000) / 10000,
-            longitude: Math.round(lon * 10000) / 10000,
-          };
-        }
+              return {
+                displayName,
+                name: cityName,
+                state: stateName,
+                country: countryName,
+                latitude: Math.round(lat * 10000) / 10000,
+                longitude: Math.round(lon * 10000) / 10000,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean) as LocationSearchResult[];
       }
     }
   } catch (err) {
-    console.warn("Nominatim geocoding request failed:", err);
+    console.warn("Nominatim search failed:", err);
   }
 
-  // 3. Check popular initial list if offline or network blocked
+  return [];
+}
+
+/**
+ * Fully Dynamic Geocoding Service.
+ * Resolves ANY user-provided location string into an accurate lat/lng location object
+ * using real-time online geocoding APIs.
+ */
+export async function geocodeLocation(query: string): Promise<JournalLocation> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    throw new Error("Please enter a valid place or city name.");
+  }
+
+  const results = await searchLocationsDynamic(trimmed);
+  if (results.length > 0) {
+    const top = results[0];
+    return {
+      name: top.displayName,
+      country: top.country || "Earth",
+      latitude: top.latitude,
+      longitude: top.longitude,
+    };
+  }
+
+  // Check initial popular list if offline
   const lower = trimmed.toLowerCase();
   const matched = POPULAR_LOCATIONS.find(
     (l) =>
@@ -159,7 +203,49 @@ export async function geocodeLocation(query: string): Promise<JournalLocation> {
 }
 
 /**
- * Synchronous resolver helper for initial dataset fallback matching.
+ * Auto-Repair Existing Firestore Journal Entries with Invalid/Outdated Coordinates.
+ */
+export async function repairJournalLocationCoords(entries: JournalEntry[]): Promise<{ repaired: JournalEntry[]; hasChanges: boolean }> {
+  let hasChanges = false;
+  const repaired = await Promise.all(
+    entries.map(async (entry) => {
+      if (entry.location && entry.location.name) {
+        const name = entry.location.name.trim();
+        const lat = entry.location.latitude;
+        const lon = entry.location.longitude;
+
+        // Check if lat/lon match old pseudo-hash offsets or out of range
+        const isSuspicious =
+          typeof lat !== "number" ||
+          typeof lon !== "number" ||
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lon) ||
+          (lat === 0 && lon === 0) ||
+          (name.toLowerCase().includes("madurai") && (lat > 30 || lon < 0));
+
+        if (isSuspicious) {
+          try {
+            console.log(`🛠️ Auto-repairing location coordinates for journal entry: "${name}"...`);
+            const resolved = await geocodeLocation(name);
+            hasChanges = true;
+            return {
+              ...entry,
+              location: resolved,
+            };
+          } catch (err) {
+            console.warn(`Could not repair location for "${name}":`, err);
+          }
+        }
+      }
+      return entry;
+    })
+  );
+
+  return { repaired, hasChanges };
+}
+
+/**
+ * Synchronous resolver helper for popular initial list matching.
  */
 export function resolveLocationFromName(placeName: string, country?: string): JournalLocation {
   const trimmed = placeName.trim();
@@ -182,7 +268,6 @@ export function resolveLocationFromName(placeName: string, country?: string): Jo
     return { ...matched };
   }
 
-  // For unknown un-geocoded strings, return placeholder until geocoded online
   return {
     name: trimmed,
     country: country || "Earth",

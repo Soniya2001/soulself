@@ -146,12 +146,12 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     camera.position.set(0, 30, 230);
     cameraRef.current = camera;
 
-    // Renderer
+    // Renderer with enhanced exposure for bright, crisp Earth details
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.65;
     rendererRef.current = renderer;
     container.innerHTML = "";
     container.appendChild(renderer.domElement);
@@ -196,11 +196,11 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
 
     const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
     const sphereMaterial = new THREE.MeshPhongMaterial({
-      color: 0x1d4ed8,
+      color: 0xffffff,
       map: earthMap,
       specularMap: earthSpecularMap,
-      specular: new THREE.Color(0x38bdf8),
-      shininess: 24,
+      specular: new THREE.Color(0x7dd3fc),
+      shininess: 14,
       bumpScale: 0.05,
     });
     const baseSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
@@ -225,7 +225,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     const innerAtmoMaterial = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.22,
       side: THREE.BackSide,
       blending: THREE.NormalBlending,
     });
@@ -236,25 +236,25 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: 0x60a5fa,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.18,
       side: THREE.BackSide,
     });
     const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
     globeGroup.add(glowSphere);
 
-    // 4. Photorealistic Lighting
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.2);
+    // 4. Photorealistic Balanced Bright Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 1.6);
     scene.add(hemiLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    sunLight.position.set(200, 120, 160);
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 2.6);
+    sunLight.position.set(220, 140, 180);
     scene.add(sunLight);
 
-    const fillLight = new THREE.DirectionalLight(0xe0f2fe, 1.0);
-    fillLight.position.set(-180, -60, -100);
+    const fillLight = new THREE.DirectionalLight(0xe0f2fe, 1.4);
+    fillLight.position.set(-200, -80, -120);
     scene.add(fillLight);
 
     // Raycasting for marker hovering & clicking

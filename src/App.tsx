@@ -32,7 +32,7 @@ import {
   DEFAULT_ABOUT_ME,
   DEFAULT_BUCKET_LIST,
 } from "./data/initialData";
-import { getSavedPreferredLocation } from "./utils/location";
+import { getSavedPreferredLocation, repairJournalLocationCoords } from "./utils/location";
 import { SplashScreen } from "./components/SplashScreen";
 import { Navbar } from "./components/Navbar";
 import { DashboardStats } from "./components/DashboardStats";
@@ -139,6 +139,15 @@ function MainAppContent() {
           setEntries([welcomeEntry]);
         } else {
           setEntries(cleanEntries);
+          // Requirement 9: Auto-repair invalid historical coordinates (e.g. old pseudo-hashes)
+          repairJournalLocationCoords(cleanEntries).then(({ repaired, hasChanges }) => {
+            if (hasChanges) {
+              setEntries(repaired);
+              repaired.forEach((rEntry) => {
+                saveJournalEntryDoc(user.uid, rEntry);
+              });
+            }
+          });
         }
         setIsDataLoading(false);
       },
