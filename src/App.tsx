@@ -79,7 +79,7 @@ function MainAppContent() {
   // App Navigation & View state
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "writer" | "all-entries" | "globe" | "inbox" | "calendar" | "emotional" | "ayra" | "diary-book"
+    "dashboard" | "writer" | "all-entries" | "globe" | "calendar" | "emotional" | "ayra" | "diary-book"
   >("dashboard");
   const [isOpeningBook, setIsOpeningBook] = useState<boolean>(false);
   const [openingTargetView, setOpeningTargetView] = useState<"writer" | "diary-book">("writer");
@@ -500,13 +500,6 @@ function MainAppContent() {
               onSelectEntry={handleOpenExistingEntry}
               onNewEntryWithLocation={(loc) => handleStartNewJournal(undefined, undefined, undefined, loc)}
             />
-          </div>
-        )}
-
-        {/* View 2: Memory Inbox */}
-        {currentView === "inbox" && (
-          <div className="animate-fade-in">
-            <MemoryInbox onAddMemoryToJournal={handleConvertMemoryToJournal} />
           </div>
         )}
 

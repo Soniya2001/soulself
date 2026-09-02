@@ -17,8 +17,8 @@ import { DataIsolationTestModal } from "./DataIsolationTestModal";
 import { AmbientSoundControl } from "./AmbientSoundControl";
 
 interface NavbarProps {
-  currentView: "dashboard" | "writer" | "all-entries" | "globe" | "inbox" | "calendar" | "emotional" | "ayra" | "diary-book";
-  onNavigate: (view: "dashboard" | "writer" | "all-entries" | "globe" | "inbox" | "calendar" | "emotional" | "ayra" | "diary-book") => void;
+  currentView: "dashboard" | "writer" | "all-entries" | "globe" | "calendar" | "emotional" | "ayra" | "diary-book";
+  onNavigate: (view: "dashboard" | "writer" | "all-entries" | "globe" | "calendar" | "emotional" | "ayra" | "diary-book") => void;
   onOpenNewJournal: () => void;
   onShowSplash: () => void;
   userProfile: UserProfile;
@@ -174,19 +174,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Globe className="w-3.5 h-3.5" />
               <span>Memory Globe</span>
-            </button>
-
-            <button
-              id="nav-inbox-btn"
-              onClick={() => onNavigate("inbox")}
-              className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${
-                currentView === "inbox"
-                  ? "bg-purple-950 text-white font-extrabold shadow-2xs"
-                  : "text-purple-900/70 hover:text-purple-950 hover:bg-pink-100/50"
-              }`}
-            >
-              <Inbox className="w-3.5 h-3.5" />
-              <span>Memory Inbox</span>
             </button>
 
             <button

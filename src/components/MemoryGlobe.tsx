@@ -44,27 +44,67 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   const [isAutoRotating, setIsAutoRotating] = useState<boolean>(true);
   const [hoveredLocation, setHoveredLocation] = useState<LocationGroup | null>(null);
 
-  // Group entries by location
+const CITY_COORDINATES: Record<string, { lat: number; lng: number; country?: string }> = {
+  chennai: { lat: 13.0827, lng: 80.2707, country: "India" },
+  bangalore: { lat: 12.9716, lng: 77.5946, country: "India" },
+  bengaluru: { lat: 12.9716, lng: 77.5946, country: "India" },
+  mumbai: { lat: 19.076, lng: 72.8777, country: "India" },
+  delhi: { lat: 28.6139, lng: 77.209, country: "India" },
+  newdelhi: { lat: 28.6139, lng: 77.209, country: "India" },
+  singapore: { lat: 1.3521, lng: 103.8198, country: "Singapore" },
+  tokyo: { lat: 35.6762, lng: 139.6503, country: "Japan" },
+  kyoto: { lat: 35.0116, lng: 135.7681, country: "Japan" },
+  paris: { lat: 48.8566, lng: 2.3522, country: "France" },
+  london: { lat: 51.5074, lng: -0.1278, country: "UK" },
+  sanfrancisco: { lat: 37.7749, lng: -122.4194, country: "USA" },
+  newyork: { lat: 40.7128, lng: -74.006, country: "USA" },
+  sydney: { lat: -33.8688, lng: 151.2093, country: "Australia" },
+  bali: { lat: -8.3405, lng: 115.092, country: "Indonesia" },
+  seoul: { lat: 37.5665, lng: 126.978, country: "South Korea" },
+};
+
+function hashLocationNameToCoords(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash << 5) - hash + name.charCodeAt(i);
+    hash |= 0;
+  }
+  const lat = ((Math.abs(hash) % 12000) / 100) - 60;
+  const lng = ((Math.abs(hash * 31) % 36000) / 100) - 180;
+  return { lat, lng };
+}
+
+  // Group entries by location given by user
   const locationGroups: LocationGroup[] = useMemo(() => {
     const map = new Map<string, LocationGroup>();
 
     entries.forEach((entry) => {
-      if (
-        entry.location &&
-        typeof entry.location.latitude === "number" &&
-        typeof entry.location.longitude === "number"
-      ) {
-        const key = `${entry.location.name.toLowerCase()}-${entry.location.latitude.toFixed(2)}`;
-        if (!map.has(key)) {
-          map.set(key, {
-            name: entry.location.name,
-            country: entry.location.country,
-            latitude: entry.location.latitude,
-            longitude: entry.location.longitude,
+      if (entry.location && entry.location.name && entry.location.name.trim().length > 0) {
+        const rawName = entry.location.name.trim();
+        const normalizedKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const known = CITY_COORDINATES[normalizedKey];
+
+        let lat = typeof entry.location.latitude === "number" ? entry.location.latitude : known?.lat;
+        let lng = typeof entry.location.longitude === "number" ? entry.location.longitude : known?.lng;
+        let country = entry.location.country || known?.country || "Earth";
+
+        if (typeof lat !== "number" || typeof lng !== "number") {
+          const fallback = hashLocationNameToCoords(rawName);
+          lat = fallback.lat;
+          lng = fallback.lng;
+        }
+
+        const mapKey = `${rawName.toLowerCase()}-${lat.toFixed(2)}`;
+        if (!map.has(mapKey)) {
+          map.set(mapKey, {
+            name: rawName,
+            country,
+            latitude: lat,
+            longitude: lng,
             entries: [],
           });
         }
-        map.get(key)!.entries.push(entry);
+        map.get(mapKey)!.entries.push(entry);
       }
     });
 
