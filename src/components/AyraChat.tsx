@@ -153,6 +153,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
   const [currentMode, setCurrentMode] = useState<AyraConversationMode>("just-talk");
   const [inputText, setInputText] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
   const [selectedCountry, setSelectedCountry] = useState<string>(DEFAULT_CRISIS_COUNTRY);
   const [includeJournalMemory, setIncludeJournalMemory] = useState<boolean>(false);
 
@@ -217,7 +218,20 @@ export const AyraChat: React.FC<AyraChatProps> = ({
   const handleSendMessage = async (textToSend?: string) => {
     const rawContent = textToSend || inputText;
     const content = rawContent.trim();
-    if (!content || isSending || !user) return;
+    if (!content || isSending) return;
+
+    if (!user) {
+      // Show a clear error if user is not authenticated
+      const authErrMsg: AyraMessage = {
+        id: `ayra-err-${Date.now()}`,
+        role: "ayra",
+        content: `💜 It looks like you're not signed in. Please sign in to chat with AYRA.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mode: currentMode,
+      };
+      setMessages((prev) => [...prev, authErrMsg]);
+      return;
+    }
 
     const userMessage: AyraMessage = {
       id: `user-msg-${Date.now()}`,
@@ -237,6 +251,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
       textareaRef.current.style.height = "auto";
     }
     setIsSending(true);
+    setIsTyping(true);
 
     let streamBuffer = "";
     let isSafety = false;
@@ -251,6 +266,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
         userName: userName || user.displayName || "Friend",
         onChunk: (chunk) => {
           streamBuffer += chunk;
+          setIsTyping(false);
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === ayraPlaceholderId);
             if (!exists) {
@@ -272,6 +288,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
         onSafetyResponse: (safety) => {
           isSafety = true;
           safetyData = safety;
+          setIsTyping(false);
           setIsCrisisActive(true);
           setMessages((prev) => {
             const safetyAyraMsg: AyraMessage = {
@@ -330,16 +347,22 @@ export const AyraChat: React.FC<AyraChatProps> = ({
       }
     } catch (err: any) {
       console.error("Failed to send message to AYRA:", err);
+      const errDetail = err?.message?.includes("401") || err?.message?.includes("Authentication")
+        ? "It looks like your session expired. Please refresh the page and sign in again."
+        : err?.message?.includes("429")
+        ? "You're sending messages too quickly. Please wait a moment and try again."
+        : "I had a small connection pause 💜. Please try again in a moment.";
       const fallbackAyraMessage: AyraMessage = {
         id: `ayra-err-${Date.now()}`,
         role: "ayra",
-        content: `I'm holding space for you 💜. I had a small connection pause, but I'm right here with you. What was on your mind?`,
+        content: `${errDetail}\n\nWhat was on your mind?`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mode: currentMode,
       };
       setMessages((prev) => [...prev.filter((m) => m.id !== ayraPlaceholderId), fallbackAyraMessage]);
     } finally {
       setIsSending(false);
+      setIsTyping(false);
     }
   };
 
@@ -354,6 +377,8 @@ export const AyraChat: React.FC<AyraChatProps> = ({
     setMessages([welcome]);
     if (mode) setCurrentMode(mode);
     setIsCrisisActive(false);
+    setIsTyping(false);
+    setIsSending(false);
     setShowHistoryDrawer(false);
   };
 
@@ -469,8 +494,8 @@ export const AyraChat: React.FC<AyraChatProps> = ({
     );
   });
 
-  // Check if AYRA is currently streaming or typing
-  const isPendingAyraFirstChunk = isSending && !messages.some((m) => m.role === "ayra" && m.id.startsWith("ayra-msg-"));
+  // isTyping is explicitly controlled: true when waiting for first chunk, false once streaming starts
+  const isPendingAyraFirstChunk = isTyping;
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col h-[calc(100vh-140px)] min-h-[580px] bg-gradient-to-b from-[#FFF5F8]/70 via-[#FAF7F9] to-[#F5F0F8]/80 rounded-[36px] border border-pink-200/70 shadow-sm overflow-hidden relative">

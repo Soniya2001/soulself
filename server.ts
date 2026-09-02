@@ -899,6 +899,10 @@ ${journalSnippet}`;
         const chunkText = chunk.text;
         if (chunkText) {
           res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
+          // Explicitly flush to ensure data is sent immediately (not buffered)
+          if (typeof (res as any).flush === "function") {
+            (res as any).flush();
+          }
         }
       }
 

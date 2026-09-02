@@ -211,13 +211,27 @@ export async function streamAyraChatMessage(params: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    const requestBody = {
+      messages: params.messages,
+      mode: params.mode,
+      countryCode: params.countryCode,
+      journalContext: params.journalContext,
+      userName: params.userName,
+    };
+
     const response = await fetch("/api/gemini/ayra/chat/stream", {
       method: "POST",
       headers,
-      body: JSON.stringify(params),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
+      const statusText = response.status === 401
+        ? "Authentication required. Please sign in again."
+        : response.status === 429
+        ? "Too many messages. Please wait a moment."
+        : `Server error (${response.status})`;
+      console.warn("[AYRA Stream] Non-OK response:", response.status, statusText);
       // Fallback to standard non-streaming endpoint
       const fallbackData = await sendAyraChatMessage(params);
       if (fallbackData.isSafetyResponse && params.onSafetyResponse) {
