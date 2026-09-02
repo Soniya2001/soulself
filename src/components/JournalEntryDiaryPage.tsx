@@ -385,6 +385,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
           containerRef={pageRef}
           onUpdate={handleUpdateSticker}
           onRemove={handleRemoveSticker}
+          readOnly={!isEditing}
         />
       ))}
 
@@ -418,7 +419,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
       {/* Page Body Content (Scrollable within fixed page boundaries) */}
       <div className="relative z-20 space-y-4 overflow-y-auto max-h-[500px] sm:max-h-[580px] pr-1.5 custom-scrollbar flex-1">
         {/* Top Meta Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-200/80 pb-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-200/80 pb-3">
           {/* Date, Time, Weather, Location */}
           <div className="flex flex-wrap items-center gap-2.5 text-xs text-purple-900/80 font-serif">
             <div className="flex items-center gap-1.5 font-bold text-pink-700 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-200/60">
@@ -438,65 +439,61 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
               </div>
             )}
 
-            {/* Interactive Location Badge & Popover */}
+            {/* Location Badge (Interactive only during Edit mode) */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsLocationPopoverOpen(!isLocationPopoverOpen)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-serif font-medium border transition-colors cursor-pointer ${
+                onClick={() => {
+                  if (isEditing) {
+                    setIsLocationPopoverOpen(!isLocationPopoverOpen);
+                  }
+                }}
+                disabled={!isEditing}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-serif font-medium border transition-colors ${
                   formData.location?.name
-                    ? "bg-pink-50 text-pink-700 hover:bg-pink-100 border-pink-200/70"
-                    : "bg-pink-50/50 text-pink-500 hover:bg-pink-100/80 border-dashed border-pink-300"
-                }`}
-                title="Click to change or add location"
+                    ? "bg-pink-50 text-pink-700 border-pink-200/70"
+                    : "bg-pink-50/50 text-pink-500 border-dashed border-pink-300"
+                } ${isEditing ? "hover:bg-pink-100 cursor-pointer" : "cursor-default"}`}
+                title={isEditing ? "Click to change location" : "Page Location"}
               >
                 <MapPin className="w-3.5 h-3.5 text-pink-500" />
                 <span>{formData.location?.name ? formData.location.name : "+ Place"}</span>
               </button>
-
             </div>
           </div>
 
-          {/* Action Toolbar: Stickers, Undo, Edit, Delete */}
+          {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Sticker Button */}
-            <button
-              type="button"
-              onClick={() => setIsStickerDrawerOpen(true)}
-              className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-              title="Add Stickers to this page"
-            >
-              <Smile className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sticker</span>
-            </button>
+            {/* Sticker Buttons (Visible ONLY during Edit mode) */}
+            {isEditing && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsStickerDrawerOpen(true)}
+                  className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Add Stickers to this page"
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Sticker</span>
+                </button>
 
-            {/* Sticker Undo Button if history exists */}
-            {stickerHistory.length > 0 && (
-              <button
-                type="button"
-                onClick={handleUndoSticker}
-                className="px-2.5 py-1.5 rounded-full bg-white hover:bg-pink-50 text-purple-900 text-xs font-medium border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-                title="Undo Sticker Action"
-              >
-                <RotateCcw className="w-3 h-3 text-pink-600" />
-                <span className="hidden sm:inline">Undo</span>
-              </button>
-            )}
-
-            {/* Clear All Stickers if page has stickers */}
-            {(formData.stickers || []).length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAllStickers}
-                className="p-1.5 rounded-full hover:bg-red-50 text-purple-400 hover:text-red-500 text-xs transition-colors cursor-pointer"
-                title="Clear all stickers on this page"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+                {stickerHistory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleUndoSticker}
+                    className="px-2.5 py-1.5 rounded-full bg-white hover:bg-pink-50 text-purple-900 text-xs font-medium border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Undo Sticker Action"
+                  >
+                    <RotateCcw className="w-3 h-3 text-pink-600" />
+                    <span className="hidden sm:inline">Undo</span>
+                  </button>
+                )}
+              </>
             )}
 
             {!isEditing ? (
               <>
+                {/* Single Clean Edit Button */}
                 <button
                   type="button"
                   id={`edit-journal-page-${pageNumber}-btn`}
@@ -507,7 +504,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                   <span>Edit ✎</span>
                 </button>
 
-                {/* Delete Page Button */}
+                {/* SINGLE Delete Page Button */}
                 {onDelete && (
                   <button
                     type="button"
@@ -593,22 +590,19 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
           )}
         </div>
 
-        {/* Title */}
+        {/* Title (Consistent height container between View and Edit modes to prevent 1cm sticker shift) */}
         {!isEditing ? (
-          <h2 className="font-serif-title text-2xl sm:text-3xl md:text-4xl font-bold text-purple-950 tracking-tight leading-snug">
+          <h2 className="font-serif-title text-2xl sm:text-3xl font-bold text-purple-950 tracking-tight leading-snug">
             {formData.title || "Untitled Journal"}
           </h2>
         ) : (
           <div>
-            <label className="text-[10px] uppercase font-bold text-pink-700 block mb-1">
-              Journal Title:
-            </label>
             <input
               type="text"
               value={formData.title || ""}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Title of this page..."
-              className="w-full text-xl sm:text-2xl font-serif-title font-bold bg-pink-50/50 border border-pink-200 rounded-xl px-3 py-2 text-purple-950 focus:outline-none focus:ring-1 focus:ring-pink-400"
+              className="w-full text-2xl sm:text-3xl font-serif-title font-bold bg-pink-50/50 border border-pink-200 rounded-xl px-3 py-1.5 text-purple-950 focus:outline-none focus:ring-1 focus:ring-pink-400"
             />
           </div>
         )}

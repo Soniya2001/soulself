@@ -311,26 +311,8 @@ export const DiaryBookView: React.FC<DiaryBookViewProps> = ({
           )}
         </div>
 
-        {/* Right Action Tools: Sound & + New Entry */}
+        {/* Right Action Tools: + New Entry */}
         <div className="flex items-center gap-2">
-          {/* Sound Toggle */}
-          <button
-            type="button"
-            onClick={toggleSound}
-            className={`p-2 rounded-full border transition-all cursor-pointer ${
-              isAmbientSoundActive
-                ? "bg-pink-100 text-pink-700 border-pink-300"
-                : "bg-white/80 text-purple-900/60 hover:text-purple-950 border-pink-200/80"
-            }`}
-            title={isAmbientSoundActive ? "Mute Ambient Pad" : "Play Meditative Ambient Pad"}
-          >
-            {isAmbientSoundActive ? (
-              <Volume2 className="w-3.5 h-3.5" />
-            ) : (
-              <VolumeX className="w-3.5 h-3.5" />
-            )}
-          </button>
-
           {/* + New Journal Page */}
           <button
             type="button"

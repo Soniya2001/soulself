@@ -8,6 +8,7 @@ interface InteractiveStickerProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onUpdate: (updated: StickerPlacement) => void;
   onRemove: (id: string) => void;
+  readOnly?: boolean;
 }
 
 type DragMode = "none" | "move" | "rotate" | "resize";
@@ -17,6 +18,7 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
   containerRef,
   onUpdate,
   onRemove,
+  readOnly = false,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
   const [activeDrag, setActiveDrag] = useState<DragMode>("none");
@@ -43,6 +45,11 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
 
   // Deselect when clicking outside the sticker
   useEffect(() => {
+    if (readOnly) {
+      setIsSelected(false);
+      return;
+    }
+
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
         setIsSelected(false);
@@ -57,7 +64,79 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
       document.removeEventListener("mousedown", handleOutsideClick);
       document.removeEventListener("touchstart", handleOutsideClick);
     };
-  }, [isSelected]);
+  }, [isSelected, readOnly]);
+
+  // Window-level pointer listeners for continuous, smooth drag/resize/rotate
+  useEffect(() => {
+    if (activeDrag === "none") return;
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      if (activeDrag === "move") {
+        if (!containerRef.current) return;
+        const deltaPixelX = e.clientX - moveDragRef.current.startX;
+        const deltaPixelY = e.clientY - moveDragRef.current.startY;
+        movedDistanceRef.current = Math.hypot(deltaPixelX, deltaPixelY);
+
+        const rect = containerRef.current.getBoundingClientRect();
+        const deltaX = (deltaPixelX / rect.width) * 100;
+        const deltaY = (deltaPixelY / rect.height) * 100;
+
+        const newX = Math.min(95, Math.max(5, moveDragRef.current.initX + deltaX));
+        const newY = Math.min(95, Math.max(5, moveDragRef.current.initY + deltaY));
+
+        onUpdate({
+          ...sticker,
+          x: Math.round(newX * 10) / 10,
+          y: Math.round(newY * 10) / 10,
+        });
+      } else if (activeDrag === "rotate") {
+        const center = stickerCenterRef.current;
+        const currentAngle =
+          (Math.atan2(e.clientY - center.cy, e.clientX - center.cx) * 180) / Math.PI;
+        const deltaAngle = currentAngle - rotateDragRef.current.startAngle;
+        let newRot = Math.round(rotateDragRef.current.initRotation + deltaAngle);
+
+        while (newRot > 180) newRot -= 360;
+        while (newRot < -180) newRot += 360;
+
+        if (Math.abs(newRot) <= 4) newRot = 0;
+
+        onUpdate({
+          ...sticker,
+          rotation: newRot,
+        });
+      } else if (activeDrag === "resize") {
+        const center = stickerCenterRef.current;
+        const currentDist = Math.hypot(e.clientX - center.cx, e.clientY - center.cy);
+        const scaleMultiplier = currentDist / resizeDragRef.current.initDist;
+        const newScale = Math.min(
+          4.0,
+          Math.max(0.3, resizeDragRef.current.initScale * scaleMultiplier)
+        );
+
+        onUpdate({
+          ...sticker,
+          scale: Math.round(newScale * 100) / 100,
+        });
+      }
+    };
+
+    const handleWindowPointerUp = () => {
+      if (activeDrag === "move" && movedDistanceRef.current < 5 && !readOnly) {
+        setIsSelected((prev) => !prev);
+        audioManager.playGentleTap();
+      }
+      setActiveDrag("none");
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove);
+    window.addEventListener("pointerup", handleWindowPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+    };
+  }, [activeDrag, sticker, containerRef, onUpdate, readOnly]);
 
   // Helper to get sticker center in screen pixels
   const getCenterPixels = () => {
@@ -71,6 +150,7 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
 
   // --- MOVE HANDLER ---
   const handleBodyPointerDown = (e: React.PointerEvent) => {
+    if (readOnly) return;
     if ((e.target as HTMLElement).closest("[data-handle]")) return;
     e.stopPropagation();
     movedDistanceRef.current = 0;
@@ -82,14 +162,11 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
       initX: sticker.x,
       initY: sticker.y,
     };
-
-    try {
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {}
   };
 
   // --- ROTATE HANDLE POINTER DOWN ---
   const handleRotatePointerDown = (e: React.PointerEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     e.preventDefault();
     setActiveDrag("rotate");
@@ -103,14 +180,11 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
       startAngle: currentAngle,
       initRotation: sticker.rotation,
     };
-
-    try {
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {}
   };
 
   // --- RESIZE HANDLE POINTER DOWN ---
   const handleResizePointerDown = (e: React.PointerEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     e.preventDefault();
     setActiveDrag("resize");
@@ -122,10 +196,6 @@ export const InteractiveSticker: React.FC<InteractiveStickerProps> = ({
       initDist: Math.max(10, dist),
       initScale: sticker.scale,
     };
-
-    try {
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {}
   };
 
   // --- GLOBAL POINTER MOVE ---
