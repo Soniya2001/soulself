@@ -68,11 +68,21 @@ export const AuthScreen: React.FC = () => {
 
         {/* Error Alert if any */}
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-left flex items-start gap-3 animate-fade-in">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-            <div className="text-xs text-red-700 leading-relaxed">
-              <p className="font-bold mb-0.5">Authentication Note</p>
-              <p>{error}</p>
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-left flex items-start gap-3 animate-fade-in shadow-xs">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-900 leading-relaxed">
+              <p className="font-bold text-amber-950 mb-1">Firebase Configuration Notice</p>
+              <p className="mb-2">{error}</p>
+              {error.includes("Anonymous Sign-In") && (
+                <div className="p-2.5 rounded-xl bg-white/80 border border-amber-200 text-[11px] text-amber-900 space-y-1 font-sans">
+                  <p className="font-bold text-amber-950">How to enable Test Accounts:</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-amber-850">
+                    <td>1. Go to <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="underline font-semibold text-pink-700">Firebase Console</a></td>
+                    <td>2. Select your project &gt; <strong>Authentication</strong> &gt; <strong>Sign-in method</strong></td>
+                    <td>3. Click <strong>Anonymous</strong> provider and toggle <strong>Enable</strong></td>
+                  </ol>
+                </div>
+              )}
             </div>
           </div>
         )}

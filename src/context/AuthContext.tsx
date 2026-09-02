@@ -81,7 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInDemoAccount(demoType);
     } catch (err: any) {
       console.error("Demo sign in error:", err);
-      setError(err.message || "Failed to sign in demo account.");
+      let msg = err.message || "Failed to sign in demo account.";
+      if (
+        err.code === "auth/admin-restricted-operation" ||
+        err.message?.includes("admin-restricted-operation")
+      ) {
+        msg =
+          "Anonymous Sign-In is disabled in your Firebase Console project. To use Test Accounts (User A / User B), please go to Firebase Console -> Authentication -> Sign-in method and enable 'Anonymous'. Alternatively, sign in using 'Continue with Google'.";
+      }
+      setError(msg);
       throw err;
     } finally {
       setLoading(false);
