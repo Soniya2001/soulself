@@ -16,6 +16,10 @@ import {
 import { JournalEntry, JournalLocation } from "../types";
 import { DEFAULT_CATEGORIES } from "../data/initialData";
 import { MemoryCarousel, LocationGroup } from "./MemoryCarousel";
+import {
+  latitudeLongitudeToGlobePosition,
+  runGeographicCoordinateUnitTests,
+} from "../utils/location";
 
 interface MemoryGlobeProps {
   entries: JournalEntry[];
@@ -34,6 +38,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const globeGroupRef = useRef<THREE.Group | null>(null);
+  const markersGroupRef = useRef<THREE.Group | null>(null);
   const markerObjectsRef = useRef<{ mesh: THREE.Object3D; group: LocationGroup }[]>([]);
   const animationFrameIdRef = useRef<number | null>(null);
 
@@ -44,73 +49,38 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   const [isAutoRotating, setIsAutoRotating] = useState<boolean>(true);
   const [hoveredLocation, setHoveredLocation] = useState<LocationGroup | null>(null);
 
-const CITY_COORDINATES: Record<string, { lat: number; lng: number; country?: string }> = {
-  madurai: { lat: 9.9252, lng: 78.1198, country: "India" },
-  chennai: { lat: 13.0827, lng: 80.2707, country: "India" },
-  bangalore: { lat: 12.9716, lng: 77.5946, country: "India" },
-  bengaluru: { lat: 12.9716, lng: 77.5946, country: "India" },
-  coimbatore: { lat: 11.0168, lng: 76.9558, country: "India" },
-  mumbai: { lat: 19.076, lng: 72.8777, country: "India" },
-  delhi: { lat: 28.6139, lng: 77.209, country: "India" },
-  newdelhi: { lat: 28.6139, lng: 77.209, country: "India" },
-  hyderabad: { lat: 17.385, lng: 78.4867, country: "India" },
-  kolkata: { lat: 22.5726, lng: 88.3639, country: "India" },
-  kochi: { lat: 9.9312, lng: 76.2673, country: "India" },
-  trivandrum: { lat: 8.5241, lng: 76.9366, country: "India" },
-  thiruvananthapuram: { lat: 8.5241, lng: 76.9366, country: "India" },
-  goa: { lat: 15.2993, lng: 74.124, country: "India" },
-  jaipur: { lat: 26.9124, lng: 75.7873, country: "India" },
-  ahmedabad: { lat: 23.0225, lng: 72.5714, country: "India" },
-  singapore: { lat: 1.3521, lng: 103.8198, country: "Singapore" },
-  tokyo: { lat: 35.6762, lng: 139.6503, country: "Japan" },
-  kyoto: { lat: 35.0116, lng: 135.7681, country: "Japan" },
-  paris: { lat: 48.8566, lng: 2.3522, country: "France" },
-  london: { lat: 51.5074, lng: -0.1278, country: "UK" },
-  sanfrancisco: { lat: 37.7749, lng: -122.4194, country: "USA" },
-  newyork: { lat: 40.7128, lng: -74.006, country: "USA" },
-  sydney: { lat: -33.8688, lng: 151.2093, country: "Australia" },
-  bali: { lat: -8.3405, lng: 115.092, country: "Indonesia" },
-  seoul: { lat: 37.5665, lng: 126.978, country: "South Korea" },
-};
+  // Requirement 20: Run mathematical unit test suite on component mount
+  useEffect(() => {
+    runGeographicCoordinateUnitTests();
+  }, []);
 
-function hashLocationNameToCoords(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash << 5) - hash + name.charCodeAt(i);
-    hash |= 0;
-  }
-  const lat = ((Math.abs(hash) % 12000) / 100) - 60;
-  const lng = ((Math.abs(hash * 31) % 36000) / 100) - 180;
-  return { lat, lng };
-}
-
-  // Group entries by location given by user
+  // Requirements 6, 14, 15, 16, 17: Extract location groups dynamically from user's journal entries
   const locationGroups: LocationGroup[] = useMemo(() => {
     const map = new Map<string, LocationGroup>();
 
     entries.forEach((entry) => {
-      if (entry.location && entry.location.name && entry.location.name.trim().length > 0) {
+      if (
+        entry.location &&
+        entry.location.name &&
+        typeof entry.location.latitude === "number" &&
+        typeof entry.location.longitude === "number" &&
+        Number.isFinite(entry.location.latitude) &&
+        Number.isFinite(entry.location.longitude) &&
+        entry.location.latitude >= -90 &&
+        entry.location.latitude <= 90 &&
+        entry.location.longitude >= -180 &&
+        entry.location.longitude <= 180 &&
+        (entry.location.latitude !== 0 || entry.location.longitude !== 0)
+      ) {
         const rawName = entry.location.name.trim();
-        const normalizedKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, "");
-        const known = CITY_COORDINATES[normalizedKey];
-
-        let lat = typeof entry.location.latitude === "number" ? entry.location.latitude : known?.lat;
-        let lng = typeof entry.location.longitude === "number" ? entry.location.longitude : known?.lng;
-        let country = entry.location.country || known?.country || "Earth";
-
-        if (typeof lat !== "number" || typeof lng !== "number") {
-          const fallback = hashLocationNameToCoords(rawName);
-          lat = fallback.lat;
-          lng = fallback.lng;
-        }
-
-        const mapKey = `${rawName.toLowerCase()}-${lat.toFixed(2)}`;
+        // Group by exact geographic lat/lng position (rounded to 3 decimals)
+        const mapKey = `${entry.location.latitude.toFixed(3)},${entry.location.longitude.toFixed(3)}`;
         if (!map.has(mapKey)) {
           map.set(mapKey, {
             name: rawName,
-            country,
-            latitude: lat,
-            longitude: lng,
+            country: entry.location.country || "Earth",
+            latitude: entry.location.latitude,
+            longitude: entry.location.longitude,
             entries: [],
           });
         }
@@ -147,16 +117,6 @@ function hashLocationNameToCoords(name: string) {
       })
       .filter((loc) => loc.entries.length > 0);
   }, [locationGroups, selectedCategory, searchQuery]);
-
-  // Helper: Convert Lat/Lng to 3D Cartesian coordinates on sphere
-  const latLngToVector3 = (lat: number, lng: number, radius: number) => {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lng + 180) * (Math.PI / 180);
-    const x = -(radius * Math.sin(phi) * Math.cos(theta));
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-    const y = radius * Math.cos(phi);
-    return new THREE.Vector3(x, y, z);
-  };
 
   // Three.js initialization and render loop
   useEffect(() => {
@@ -198,10 +158,14 @@ function hashLocationNameToCoords(name: string) {
     controls.zoomSpeed = 1.0;
     controlsRef.current = controls;
 
-    // Globe Group
+    // Requirement 7: Globe Group (Parent of Earth AND Markers so both rotate together!)
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
+
+    const markersGroup = new THREE.Group();
+    globeGroup.add(markersGroup);
+    markersGroupRef.current = markersGroup;
 
     const sphereRadius = 75;
 
@@ -227,7 +191,7 @@ function hashLocationNameToCoords(name: string) {
     const baseSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     globeGroup.add(baseSphere);
 
-    // 2. Realistic Dynamic Cloud Layer (Independently rotating weather systems)
+    // 2. Realistic Dynamic Cloud Layer
     const cloudsMap = textureLoader.load("/textures/earth_clouds_1024.png");
     const cloudsGeometry = new THREE.SphereGeometry(sphereRadius + 0.85, 64, 64);
     const cloudsMaterial = new THREE.MeshPhongMaterial({
@@ -241,7 +205,7 @@ function hashLocationNameToCoords(name: string) {
     cloudsMesh.name = "cloudsMesh";
     globeGroup.add(cloudsMesh);
 
-    // 3. Atmospheric Rayleigh Scattering Glow (Soft Azure halo limb)
+    // 3. Atmospheric Glow
     const innerAtmoGeometry = new THREE.SphereGeometry(sphereRadius + 1.2, 64, 64);
     const innerAtmoMaterial = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
@@ -263,45 +227,7 @@ function hashLocationNameToCoords(name: string) {
     const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
     globeGroup.add(glowSphere);
 
-    // 4. Subtle Coordinate Grid Lines (Soft azure latitude & longitude rings)
-    const gridLinesGroup = new THREE.Group();
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x0284c7,
-      transparent: true,
-      opacity: 0.18,
-    });
-
-    for (let lat = -60; lat <= 60; lat += 30) {
-      const radiusAtLat = (sphereRadius + 1.2) * Math.cos((lat * Math.PI) / 180);
-      const y = (sphereRadius + 1.2) * Math.sin((lat * Math.PI) / 180);
-      const circleGeometry = new THREE.BufferGeometry();
-      const points: THREE.Vector3[] = [];
-      for (let i = 0; i <= 64; i++) {
-        const theta = (i / 64) * Math.PI * 2;
-        points.push(new THREE.Vector3(Math.cos(theta) * radiusAtLat, y, Math.sin(theta) * radiusAtLat));
-      }
-      circleGeometry.setFromPoints(points);
-      const line = new THREE.Line(circleGeometry, lineMaterial);
-      gridLinesGroup.add(line);
-    }
-
-    for (let lng = 0; lng < 360; lng += 45) {
-      const circleGeometry = new THREE.BufferGeometry();
-      const points: THREE.Vector3[] = [];
-      for (let i = 0; i <= 64; i++) {
-        const phi = (i / 64) * Math.PI * 2;
-        const x = (sphereRadius + 1.2) * Math.sin(phi) * Math.cos((lng * Math.PI) / 180);
-        const y = (sphereRadius + 1.2) * Math.cos(phi);
-        const z = (sphereRadius + 1.2) * Math.sin(phi) * Math.sin((lng * Math.PI) / 180);
-        points.push(new THREE.Vector3(x, y, z));
-      }
-      circleGeometry.setFromPoints(points);
-      const line = new THREE.Line(circleGeometry, lineMaterial);
-      gridLinesGroup.add(line);
-    }
-    globeGroup.add(gridLinesGroup);
-
-    // 5. Photorealistic Balanced Lighting for Clean White Background
+    // 4. Photorealistic Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
@@ -438,36 +364,44 @@ function hashLocationNameToCoords(name: string) {
     }
   }, [isAutoRotating]);
 
-  // Update 3D Memory Markers when filtered location groups change
+  // Requirements 4, 6, 7, 12, 13, 14: Update 3D Memory Markers using generic projection
   useEffect(() => {
-    if (!globeGroupRef.current) return;
-    const globeGroup = globeGroupRef.current;
+    if (!markersGroupRef.current) return;
+    const markersGroup = markersGroupRef.current;
 
     // Remove old markers
     markerObjectsRef.current.forEach(({ mesh }) => {
-      globeGroup.remove(mesh);
+      markersGroup.remove(mesh);
     });
     markerObjectsRef.current = [];
 
     const sphereRadius = 75;
 
     filteredLocationGroups.forEach((group) => {
-      const position = latLngToVector3(group.latitude, group.longitude, sphereRadius + 1.2);
+      // Single Source of Truth conversion from lat/lon to 3D Globe position
+      const position = latitudeLongitudeToGlobePosition(
+        group.latitude,
+        group.longitude,
+        sphereRadius * 1.015
+      );
 
       const markerContainer = new THREE.Group();
       markerContainer.position.copy(position);
 
-      // Align marker with sphere normal
-      markerContainer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), position.clone().normalize());
+      // Align marker normal with globe surface
+      markerContainer.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        position.clone().normalize()
+      );
 
       // 1. Core Pin Sphere
       const isSelected = activeLocation?.name === group.name;
-      const pinGeometry = new THREE.SphereGeometry(2.0, 16, 16);
+      const pinGeometry = new THREE.SphereGeometry(2.2, 16, 16);
       const pinMaterial = new THREE.MeshBasicMaterial({
         color: isSelected ? 0xec4899 : 0xdb2777,
       });
       const pinMesh = new THREE.Mesh(pinGeometry, pinMaterial);
-      pinMesh.position.y = 1.5;
+      pinMesh.position.y = 1.6;
       markerContainer.add(pinMesh);
 
       // 2. Animated Pulsing Glow Ring on Surface
@@ -476,15 +410,15 @@ function hashLocationNameToCoords(name: string) {
         color: isSelected ? 0xf472b6 : 0xfbcfe8,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.85,
       });
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = "glowRing";
       ringMesh.rotation.x = Math.PI / 2;
       markerContainer.add(ringMesh);
 
-      // 3. Stalk connecting beacon to Earth's surface
-      const stalkGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2.5, 8);
+      // 3. Beacon Stalk connecting to Earth's surface
+      const stalkGeometry = new THREE.CylinderGeometry(0.35, 0.35, 2.5, 8);
       const stalkMaterial = new THREE.MeshBasicMaterial({
         color: 0x9d174d,
         transparent: true,
@@ -494,7 +428,7 @@ function hashLocationNameToCoords(name: string) {
       stalkMesh.position.y = 1.25;
       markerContainer.add(stalkMesh);
 
-      globeGroup.add(markerContainer);
+      markersGroup.add(markerContainer);
       markerObjectsRef.current.push({ mesh: markerContainer, group });
     });
   }, [filteredLocationGroups, activeLocation]);
@@ -504,18 +438,15 @@ function hashLocationNameToCoords(name: string) {
     setActiveLocation(loc);
     setIsAutoRotating(false);
 
-    if (cameraRef.current && controlsRef.current && globeGroupRef.current) {
-      const phi = (90 - loc.latitude) * (Math.PI / 180);
-      const theta = (loc.longitude + 180) * (Math.PI / 180);
-      const targetRadius = 150;
+    if (cameraRef.current && controlsRef.current) {
+      const targetRadius = 210;
+      const targetPos = latitudeLongitudeToGlobePosition(
+        loc.latitude,
+        loc.longitude,
+        targetRadius
+      );
 
-      const targetX = -(targetRadius * Math.sin(phi) * Math.cos(theta));
-      const targetZ = targetRadius * Math.sin(phi) * Math.sin(theta);
-      const targetY = targetRadius * Math.cos(phi);
-
-      const targetPos = new THREE.Vector3(targetX, targetY, targetZ);
       const startPos = cameraRef.current.position.clone();
-
       let progress = 0;
       const animateCamera = () => {
         progress += 0.04;
@@ -548,154 +479,137 @@ function hashLocationNameToCoords(name: string) {
     }
   };
 
-  // Selected Location for Carousel (default to first location group if none active)
-  const currentCarouselLocation = activeLocation || (filteredLocationGroups.length > 0 ? filteredLocationGroups[0] : null);
+  const currentDisplayLocation = activeLocation || hoveredLocation;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto text-purple-950 font-sans">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-pink-200/60">
+    <div className="w-full space-y-8 animate-fade-in">
+      {/* Globe Controls & Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 p-4 sm:p-6 rounded-3xl border border-pink-100 shadow-xs">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Memory Globe
-            </h2>
-            <span className="w-2.5 h-2.5 rounded-full bg-pink-500 animate-pulse" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs uppercase tracking-[0.2em] font-bold text-purple-950">
+              EXPLORE MEMORIES
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
           </div>
-          <p className="text-sm text-purple-900/70 font-serif">
-            Explore your memories geographically on an interactive 3D Earth globe.
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-purple-950">
+            Interactive 3D Memory Globe
+          </h2>
+          <p className="text-xs sm:text-sm text-[#7E6584] font-serif">
+            Watch your journal memories pop up across Earth as the globe rotates.
           </p>
         </div>
 
-        {/* Search Bar & Category Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[190px]">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search destinations, memories..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-full bg-white border border-pink-200 text-xs text-purple-950 placeholder:text-purple-400/60 focus:outline-none focus:ring-2 focus:ring-pink-400 shadow-xs"
-            />
-          </div>
-
-          <div className="flex items-center gap-1 bg-white p-1 rounded-full border border-pink-200 shadow-xs">
-            {["ALL", "Travel", "Work", "Personal", "Family"].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold transition-all cursor-pointer ${
-                  selectedCategory === cat
-                    ? "bg-purple-950 text-white shadow-xs"
-                    : "text-purple-900/60 hover:text-purple-950"
-                }`}
-              >
-                {cat === "ALL" ? "All Locations" : cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main 3D Canvas Card with Pristine White Background */}
-      <div className="relative rounded-[36px] bg-white border border-pink-200/80 shadow-xl overflow-hidden min-h-[520px] sm:min-h-[580px] flex flex-col">
-        {/* Soft Radial Ambient Glow behind the Globe */}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(240,249,255,0.8)_0%,rgba(255,245,250,0.5)_50%,rgba(255,255,255,1)_100%)]" />
-
-        {/* 3D Interactive Canvas Container */}
-        <div className="relative w-full h-[520px] sm:h-[580px]">
-          <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-
-          {/* Floating HUD Controls */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
-            <div className="px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-pink-200/80 text-[11px] font-semibold text-purple-950 flex items-center gap-2 shadow-xs">
-              <MapPin className="w-3.5 h-3.5 text-pink-500" />
-              <span>
-                {filteredLocationGroups.length} Location{filteredLocationGroups.length === 1 ? "" : "s"} on Earth
-              </span>
-            </div>
-          </div>
-
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 z-20 bg-white/90 backdrop-blur-md p-1 rounded-full border border-pink-200/80 shadow-xs">
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+          <button
+            onClick={() => setSelectedCategory("ALL")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              selectedCategory === "ALL"
+                ? "bg-purple-950 text-white shadow-2xs"
+                : "bg-pink-50 text-purple-900 hover:bg-pink-100"
+            }`}
+          >
+            All Places ({locationGroups.length})
+          </button>
+          {DEFAULT_CATEGORIES.map((cat) => (
             <button
-              onClick={() => setIsAutoRotating(!isAutoRotating)}
-              title={isAutoRotating ? "Pause auto-rotation" : "Resume auto-rotation"}
-              className={`p-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                isAutoRotating ? "bg-pink-500 text-white shadow-xs" : "text-purple-700 hover:bg-pink-50"
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.name)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
+                selectedCategory === cat.name
+                  ? "bg-purple-950 text-white shadow-2xs"
+                  : "bg-pink-50/80 text-purple-900 hover:bg-pink-100"
               }`}
             >
-              {isAutoRotating ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span>{cat.emoji}</span>
+              <span>{cat.name}</span>
             </button>
-            <button
-              onClick={() => handleZoom("in")}
-              title="Zoom in"
-              className="p-2 rounded-full text-purple-700 hover:bg-pink-50 transition-colors cursor-pointer"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => handleZoom("out")}
-              title="Zoom out"
-              className="p-2 rounded-full text-purple-700 hover:bg-pink-50 transition-colors cursor-pointer"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={handleReset}
-              title="Reset view"
-              className="p-2 rounded-full text-purple-700 hover:bg-pink-50 transition-colors cursor-pointer"
-            >
-              <Compass className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Hover tooltip */}
-          {hoveredLocation && !activeLocation && (
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
-              <div className="px-4 py-2 rounded-2xl bg-purple-950/90 backdrop-blur-md text-white text-xs font-serif shadow-xl flex items-center gap-2 border border-pink-300/30">
-                <MapPin className="w-3.5 h-3.5 text-pink-400" />
-                <span className="font-bold">{hoveredLocation.name}</span>
-                {hoveredLocation.country && <span className="opacity-75 text-pink-200">({hoveredLocation.country})</span>}
-                <span className="bg-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-sans font-bold">
-                  {hoveredLocation.entries.length} {hoveredLocation.entries.length === 1 ? "entry" : "entries"}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Location Pins Quick Selector Bar */}
-          <div className="absolute bottom-4 left-4 right-4 z-20 overflow-x-auto pb-1 flex items-center justify-center gap-2 scrollbar-none">
-            {filteredLocationGroups.map((loc) => (
-              <button
-                key={loc.name}
-                onClick={() => focusOnLocation(loc)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                  currentCarouselLocation?.name === loc.name
-                    ? "bg-purple-950 text-white ring-2 ring-pink-400 font-bold scale-102"
-                    : "bg-white/95 text-purple-950 hover:bg-pink-50 border border-pink-200/80"
-                }`}
-              >
-                <span>📍 {loc.name}</span>
-                <span className="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-full font-bold">
-                  {loc.entries.length}
-                </span>
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Upgraded Center-Focused Memory Carousel Section (Directly Beneath 3D Globe) */}
-      <div id="memory-globe-carousel-container" className="w-full">
-        <MemoryCarousel
-          location={currentCarouselLocation}
-          entries={currentCarouselLocation ? currentCarouselLocation.entries : []}
-          onSelectEntry={onSelectEntry}
-          onNewEntryWithLocation={onNewEntryWithLocation}
-        />
+      {/* Main 3D Globe Stage */}
+      <div className="relative w-full rounded-3xl overflow-hidden bg-white border border-pink-100/90 shadow-lg min-h-[520px] sm:min-h-[580px] flex items-center justify-center">
+        {/* Three.js Container */}
+        <div ref={containerRef} className="w-full h-[520px] sm:h-[580px] cursor-grab" />
+
+        {/* Top Floating Telemetry Badge */}
+        <div className="absolute top-4 left-4 z-30 flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-pink-200/80 text-xs font-semibold text-purple-950 shadow-sm">
+            <MapPin className="w-3.5 h-3.5 text-pink-500" />
+            <span>{filteredLocationGroups.length} Locations on Earth</span>
+          </div>
+        </div>
+
+        {/* Floating Globe Action Controls */}
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-white/90 backdrop-blur-md p-1.5 rounded-full border border-pink-200/80 shadow-sm">
+          <button
+            onClick={() => setIsAutoRotating(!isAutoRotating)}
+            className={`p-2 rounded-full transition-all cursor-pointer ${
+              isAutoRotating ? "bg-pink-100 text-pink-700 font-bold" : "text-purple-900 hover:bg-pink-50"
+            }`}
+            title={isAutoRotating ? "Pause Earth Rotation" : "Auto-Rotate Earth"}
+          >
+            {isAutoRotating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => handleZoom("in")}
+            className="p-2 rounded-full text-purple-900 hover:bg-pink-50 transition-all cursor-pointer"
+            title="Zoom In"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleZoom("out")}
+            className="p-2 rounded-full text-purple-900 hover:bg-pink-50 transition-all cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleReset}
+            className="p-2 rounded-full text-purple-900 hover:bg-pink-50 transition-all cursor-pointer"
+            title="Reset Globe Camera"
+          >
+            <Compass className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Bottom Hover/Selected Location Chip */}
+        {currentDisplayLocation && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-purple-950/95 text-white px-5 py-2.5 rounded-full shadow-xl border border-pink-300/40 text-xs font-serif flex items-center gap-2 animate-slide-up">
+            <MapPin className="w-4 h-4 text-pink-400" />
+            <span className="font-bold">{currentDisplayLocation.name}</span>
+            <span className="text-pink-300">({currentDisplayLocation.entries.length} memories)</span>
+          </div>
+        )}
+
+        {/* Requirement 19: Developer Diagnostic Overlay */}
+        {(activeLocation || hoveredLocation) && (
+          <div className="absolute bottom-4 left-4 z-40 bg-purple-950/90 text-white p-3 rounded-2xl text-xs font-mono backdrop-blur-md border border-pink-300/40 shadow-xl space-y-1 hidden md:block">
+            <div className="font-bold text-pink-300 flex items-center gap-1.5 font-serif">
+              <MapPin className="w-3.5 h-3.5 text-pink-400" />
+              <span>{(activeLocation || hoveredLocation)?.name}</span>
+            </div>
+            <div className="text-[11px] text-gray-300">
+              Lat: {(activeLocation || hoveredLocation)?.latitude.toFixed(4)}° | Lon: {(activeLocation || hoveredLocation)?.longitude.toFixed(4)}°
+            </div>
+            <div className="text-[10px] text-pink-200/80">
+              3D Vector: ({latitudeLongitudeToGlobePosition((activeLocation || hoveredLocation)!.latitude, (activeLocation || hoveredLocation)!.longitude, 75).x.toFixed(1)}, {latitudeLongitudeToGlobePosition((activeLocation || hoveredLocation)!.latitude, (activeLocation || hoveredLocation)!.longitude, 75).y.toFixed(1)}, {latitudeLongitudeToGlobePosition((activeLocation || hoveredLocation)!.latitude, (activeLocation || hoveredLocation)!.longitude, 75).z.toFixed(1)})
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Center-Focused Memory Stack Carousel underneath the Globe */}
+      <MemoryCarousel
+        locationGroups={filteredLocationGroups}
+        selectedLocation={activeLocation}
+        onSelectLocation={focusOnLocation}
+        onOpenJournalEntry={onSelectEntry}
+        onNewEntryWithLocation={onNewEntryWithLocation}
+      />
     </div>
   );
 };
-

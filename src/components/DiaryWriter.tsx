@@ -45,6 +45,7 @@ import {
   detectCurrentLocation,
   getSavedPreferredLocation,
   savePreferredLocation,
+  geocodeLocation,
 } from "../utils/location";
 import { suggestJournalCategories } from "../services/geminiClient";
 import { audioManager } from "../utils/audio";
@@ -321,17 +322,25 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({
     }
   };
 
-  const handleCustomLocationSubmit = (e: React.FormEvent) => {
+  const handleCustomLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customLocationName.trim()) return;
-    const newLoc = resolveLocationFromName(customLocationName.trim());
-    setLocation(newLoc);
-    savePreferredLocation(newLoc);
-    setCustomLocationName("");
-    setIsLocationSelectorOpen(false);
-    triggerAutosave();
-    audioManager.playGentleTap();
-    showToast(`Location set to ${newLoc.name} 🌍`);
+
+    setIsDetectingLocation(true);
+    try {
+      const newLoc = await geocodeLocation(customLocationName.trim());
+      setLocation(newLoc);
+      savePreferredLocation(newLoc);
+      setCustomLocationName("");
+      setIsLocationSelectorOpen(false);
+      triggerAutosave();
+      audioManager.playGentleTap();
+      showToast(`Location set to ${newLoc.name} 🌍`);
+    } catch (err: any) {
+      showToast(err.message || "Couldn't find this location. Please choose a valid place.");
+    } finally {
+      setIsDetectingLocation(false);
+    }
   };
 
   const handleClearLocation = () => {

@@ -29,6 +29,7 @@ import {
   resolveLocationFromName,
   detectCurrentLocation,
   savePreferredLocation,
+  geocodeLocation,
 } from "../utils/location";
 
 interface JournalEntryDiaryPageProps {
@@ -144,20 +145,28 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
     }
   };
 
-  const handleCustomLocationSubmit = (e: React.FormEvent) => {
+  const handleCustomLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customLocationText.trim()) return;
-    const resolved = resolveLocationFromName(customLocationText.trim());
-    const next = { ...formData, location: resolved };
-    setFormData(next);
-    savePreferredLocation(resolved);
-    setCustomLocationText("");
-    setIsLocationPopoverOpen(false);
-    audioManager.playGentleTap();
-    if (!isEditing) {
-      onSave(next);
+
+    setIsDetectingLocation(true);
+    try {
+      const resolved = await geocodeLocation(customLocationText.trim());
+      const next = { ...formData, location: resolved };
+      setFormData(next);
+      savePreferredLocation(resolved);
+      setCustomLocationText("");
+      setIsLocationPopoverOpen(false);
+      audioManager.playGentleTap();
+      if (!isEditing) {
+        onSave(next);
+      }
+      showToast(`Location updated to ${resolved.name} 🌍`);
+    } catch (err: any) {
+      showToast(err.message || "Couldn't find this location. Please choose a valid place.");
+    } finally {
+      setIsDetectingLocation(false);
     }
-    showToast(`Location updated to ${resolved.name} 🌍`);
   };
 
   const handleClearPageLocation = () => {
