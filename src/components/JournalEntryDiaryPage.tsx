@@ -324,7 +324,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
     <div
       ref={pageRef}
       id={`diary-page-entry-${entry.id}`}
-      className="relative w-full min-h-[640px] sm:min-h-[720px] bg-[#FFFDFB] diary-paper-lined rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-inner flex flex-col justify-between overflow-hidden select-text transition-all"
+      className="relative w-full min-h-[660px] sm:min-h-[740px] h-[660px] sm:h-[740px] bg-[#FFFDFB] diary-paper-lined rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-inner flex flex-col justify-between overflow-hidden select-text transition-all"
     >
       {/* Decorative Washi Tape Accent */}
       <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-28 h-5 bg-pink-200/70 backdrop-blur-xs opacity-90 rotate-1 rounded-xs pointer-events-none shadow-2xs z-10 border border-pink-300/40" />
@@ -370,8 +370,8 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
         </div>
       )}
 
-      {/* Page Body Content */}
-      <div className="relative z-20 space-y-5">
+      {/* Page Body Content (Scrollable within fixed page boundaries) */}
+      <div className="relative z-20 space-y-4 overflow-y-auto max-h-[500px] sm:max-h-[580px] pr-1.5 custom-scrollbar flex-1">
         {/* Top Meta Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-200/80 pb-3.5">
           {/* Date, Time, Weather, Location */}
@@ -559,10 +559,11 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(true)}
-                    className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    title={`Tear out & Delete Page ${pageNumber}`}
+                    className="px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    title={`Delete Page ${pageNumber}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Delete 🗑️</span>
                   </button>
                 )}
               </>

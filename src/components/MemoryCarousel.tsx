@@ -47,7 +47,7 @@ export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!entries || entries.length <= 1) return;
       // Only navigate if user is not typing in an input/textarea
-      const activeElement = document.activeElement;
+      const activeElement = document.activeElement as HTMLElement | null;
       const isInput =
         activeElement &&
         (activeElement.tagName === "INPUT" ||

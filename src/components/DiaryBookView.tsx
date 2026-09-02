@@ -80,6 +80,13 @@ export const DiaryBookView: React.FC<DiaryBookViewProps> = ({
     }
   }, [initialPage, totalPages]);
 
+  // Automatically adjust currentPage if totalPages decreases due to page deletion
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages >= 1) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const goToPage = useCallback(
     (pageNumber: number) => {
       if (pageNumber < 1 || pageNumber > totalPages || pageNumber === currentPage || isTurning) {

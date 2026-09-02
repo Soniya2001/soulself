@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   BookHeart,
@@ -86,6 +86,8 @@ function MainAppContent() {
   const [targetDiaryPage, setTargetDiaryPage] = useState<number>(1);
   const [activeEntry, setActiveEntry] = useState<JournalEntry | null>(null);
 
+  const hasSeededWelcomeRef = useRef<Record<string, boolean>>({});
+
   // Synchronize Firestore Real-Time Stream whenever authenticated user changes
   useEffect(() => {
     if (!user) {
@@ -100,10 +102,17 @@ function MainAppContent() {
     const unsubscribeJournals = subscribeToUserJournals(
       user.uid,
       async (userEntries) => {
-        if (userEntries.length === 0) {
-          // If brand new user with no journals yet, populate their first initial welcome journal entry
+        // Deduplicate entries by ID
+        const uniqueMap = new Map<string, JournalEntry>();
+        userEntries.forEach((e) => uniqueMap.set(e.id, e));
+        const cleanEntries = Array.from(uniqueMap.values());
+
+        if (cleanEntries.length === 0 && !hasSeededWelcomeRef.current[user.uid]) {
+          hasSeededWelcomeRef.current[user.uid] = true;
+          // Single deterministic welcome entry ID per user
+          const welcomeEntryId = `welcome-${user.uid}`;
           const welcomeEntry: JournalEntry = {
-            id: `welcome-${Date.now()}`,
+            id: welcomeEntryId,
             userId: user.uid,
             title: "Welcome to My Mindful Sanctuary 🌸",
             content: `Dear SoulSelf,\n\nToday I opened my personal digital diary. Here, in this cozy haven, I can freely express my deepest thoughts, celebrate quiet wins, and reflect on life's gentle unfolding.\n\nWith SoulSelf and Gemini holding space for my words, I look forward to nurturing my peace, creativity, and self-compassion.`,
@@ -129,7 +138,7 @@ function MainAppContent() {
           await saveJournalEntryDoc(user.uid, welcomeEntry);
           setEntries([welcomeEntry]);
         } else {
-          setEntries(userEntries);
+          setEntries(cleanEntries);
         }
         setIsDataLoading(false);
       },
@@ -531,7 +540,11 @@ function MainAppContent() {
         {/* View 5: Emotional Journey Tab */}
         {currentView === "emotional" && (
           <div className="animate-fade-in">
-            <EmotionalJourney entries={entries} />
+            <EmotionalJourney
+              entries={entries}
+              onSelectEntry={handleOpenExistingEntry}
+              onNewJournalClick={() => handleStartNewJournal()}
+            />
             <GeminiReflectionCard
               entries={entries}
               userName={userProfile.name}
@@ -643,7 +656,11 @@ function MainAppContent() {
                 />
 
                 {/* Emotional Journey & Mood Flow */}
-                <EmotionalJourney entries={entries} />
+                <EmotionalJourney
+                  entries={entries}
+                  onSelectEntry={handleOpenExistingEntry}
+                  onNewJournalClick={() => handleStartNewJournal()}
+                />
 
                 {/* Calendar View */}
                 <JournalCalendar
