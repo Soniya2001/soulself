@@ -19,6 +19,7 @@ import { MemoryCarousel, LocationGroup } from "./MemoryCarousel";
 import {
   latitudeLongitudeToGlobePosition,
   runGeographicCoordinateUnitTests,
+  resolveLocationFromName,
 } from "../utils/location";
 
 interface MemoryGlobeProps {
@@ -59,32 +60,42 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     const map = new Map<string, LocationGroup>();
 
     entries.forEach((entry) => {
-      if (
-        entry.location &&
-        entry.location.name &&
-        typeof entry.location.latitude === "number" &&
-        typeof entry.location.longitude === "number" &&
-        Number.isFinite(entry.location.latitude) &&
-        Number.isFinite(entry.location.longitude) &&
-        entry.location.latitude >= -90 &&
-        entry.location.latitude <= 90 &&
-        entry.location.longitude >= -180 &&
-        entry.location.longitude <= 180 &&
-        (entry.location.latitude !== 0 || entry.location.longitude !== 0)
-      ) {
+      if (entry.location && entry.location.name && entry.location.name.trim().length > 0) {
         const rawName = entry.location.name.trim();
-        // Group by exact geographic lat/lng position (rounded to 3 decimals)
-        const mapKey = `${entry.location.latitude.toFixed(3)},${entry.location.longitude.toFixed(3)}`;
-        if (!map.has(mapKey)) {
-          map.set(mapKey, {
-            name: rawName,
-            country: entry.location.country || "Earth",
-            latitude: entry.location.latitude,
-            longitude: entry.location.longitude,
-            entries: [],
-          });
+
+        let lat = typeof entry.location.latitude === "number" ? entry.location.latitude : undefined;
+        let lng = typeof entry.location.longitude === "number" ? entry.location.longitude : undefined;
+        let country = entry.location.country || "Earth";
+
+        if (typeof lat !== "number" || typeof lng !== "number" || (lat === 0 && lng === 0)) {
+          const resolved = resolveLocationFromName(rawName, country);
+          lat = resolved.latitude;
+          lng = resolved.longitude;
+          country = resolved.country || country;
         }
-        map.get(mapKey)!.entries.push(entry);
+
+        if (
+          typeof lat === "number" &&
+          typeof lng === "number" &&
+          Number.isFinite(lat) &&
+          Number.isFinite(lng) &&
+          lat >= -90 &&
+          lat <= 90 &&
+          lng >= -180 &&
+          lng <= 180
+        ) {
+          const mapKey = `${rawName.toLowerCase()}-${lat.toFixed(3)},${lng.toFixed(3)}`;
+          if (!map.has(mapKey)) {
+            map.set(mapKey, {
+              name: rawName,
+              country,
+              latitude: lat,
+              longitude: lng,
+              entries: [],
+            });
+          }
+          map.get(mapKey)!.entries.push(entry);
+        }
       }
     });
 
@@ -611,10 +622,15 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
 
       {/* Center-Focused Memory Stack Carousel underneath the Globe */}
       <MemoryCarousel
-        locationGroups={filteredLocationGroups}
-        selectedLocation={activeLocation}
-        onSelectLocation={focusOnLocation}
-        onOpenJournalEntry={onSelectEntry}
+        location={activeLocation || (filteredLocationGroups.length > 0 ? filteredLocationGroups[0] : null)}
+        entries={
+          activeLocation
+            ? activeLocation.entries
+            : filteredLocationGroups.length > 0
+            ? filteredLocationGroups[0].entries
+            : []
+        }
+        onSelectEntry={onSelectEntry}
         onNewEntryWithLocation={onNewEntryWithLocation}
       />
     </div>
