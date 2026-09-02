@@ -454,147 +454,6 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                 <span>{formData.location?.name ? formData.location.name : "+ Place"}</span>
               </button>
 
-              {isLocationPopoverOpen && (
-                <div className="fixed inset-0 z-50 bg-purple-950/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-purple-950">
-                  <div
-                    className="relative w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-pink-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-pink-100">
-                      <div className="text-sm font-bold font-serif text-purple-950 flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-pink-500" />
-                        <span>Edit Page Location</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsLocationPopoverOpen(false)}
-                        className="text-purple-400 hover:text-purple-700 p-1 rounded-full hover:bg-pink-50 cursor-pointer"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Confirmation Badge for Selected Location */}
-                    {formData.location && (
-                      <div className="mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 font-serif shadow-xs">
-                        <div className="font-bold text-emerald-900 flex items-center gap-1.5 mb-1">
-                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>{formData.location.name}</span>
-                        </div>
-                        {typeof formData.location.latitude === "number" && typeof formData.location.longitude === "number" && (
-                          <div className="text-[11px] font-mono text-emerald-800/90">
-                            Latitude: {formData.location.latitude.toFixed(4)}° · Longitude: {formData.location.longitude.toFixed(4)}°
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* GPS Detection */}
-                    <button
-                      type="button"
-                      onClick={handleDetectPageLocation}
-                      disabled={isDetectingLocation}
-                      className="w-full mb-3 py-2.5 px-3 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 font-semibold text-xs border border-pink-200 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      {isDetectingLocation ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin text-pink-600" />
-                          <span>Detecting GPS Location...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Navigation className="w-4 h-4 text-pink-600" />
-                          <span>Detect My Current Location</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Custom Location Search */}
-                    <form onSubmit={handleCustomLocationSubmit} className="mb-3">
-                      <label className="text-[11px] uppercase font-bold text-purple-900/60 block mb-1">
-                        Type any city or place name:
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={customLocationText}
-                          onChange={(e) => setCustomLocationText(e.target.value)}
-                          placeholder="Type Madurai, Tokyo, Paris..."
-                          className="flex-1 px-3.5 py-2 rounded-xl bg-pink-50/60 border border-pink-200/80 text-xs text-purple-950 placeholder:text-purple-400 focus:outline-none focus:ring-1 focus:ring-pink-400"
-                        />
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                        >
-                          Search
-                        </button>
-                      </div>
-                    </form>
-
-                    {/* Real-Time Dynamic Search Autocomplete Candidates */}
-                    {isSearchingLocation && (
-                      <div className="py-2 text-center text-xs font-serif text-pink-600 flex items-center justify-center gap-2">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-600" />
-                        <span>Searching global geocoding registry...</span>
-                      </div>
-                    )}
-
-                    {searchResults.length > 0 && (
-                      <div className="mb-3 max-h-44 overflow-y-auto bg-white rounded-2xl border border-pink-200 p-1.5 shadow-md space-y-1 custom-scrollbar">
-                        <div className="px-2 py-1 text-[10px] uppercase font-bold text-purple-900/60">
-                          Select your exact location match:
-                        </div>
-                        {searchResults.map((res, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSelectSearchResult(res)}
-                            className="w-full text-left p-2 rounded-xl text-xs hover:bg-pink-50 text-purple-950 flex flex-col cursor-pointer transition-colors border border-transparent hover:border-pink-200"
-                          >
-                            <span className="font-bold text-purple-950">📍 {res.displayName}</span>
-                            <span className="text-[10px] font-mono text-purple-900/60">
-                              Lat: {res.latitude.toFixed(4)}° · Lon: {res.longitude.toFixed(4)}°
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Worldwide Quick Suggestions */}
-                    <div className="text-[11px] uppercase font-bold text-purple-900/60 mb-1.5">
-                      Quick Worldwide Suggestions:
-                    </div>
-                    <div className="space-y-1 max-h-36 overflow-y-auto mb-3 pr-1 custom-scrollbar">
-                      {POPULAR_LOCATIONS.map((loc) => (
-                        <button
-                          key={loc.name}
-                          type="button"
-                          onClick={() => handleSelectLocation(loc)}
-                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-serif flex items-center justify-between transition-colors cursor-pointer ${
-                            formData.location?.name === loc.name
-                              ? "bg-pink-100 text-pink-900 font-bold"
-                              : "hover:bg-pink-50 text-purple-950"
-                          }`}
-                        >
-                          <span>📍 {loc.name}</span>
-                          <span className="text-[10px] text-purple-400">{loc.country}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Clear Location */}
-                    {formData.location && (
-                      <button
-                        type="button"
-                        onClick={handleClearPageLocation}
-                        className="w-full pt-2.5 border-t border-pink-100 text-center text-xs text-rose-500 hover:text-rose-700 font-medium cursor-pointer"
-                      >
-                        ✕ Remove Location from this Page
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -950,6 +809,148 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                 <span>{isDeleting ? "Deleting..." : "Delete Page"}</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* High Z-Index Location Selector Modal at Top Level */}
+      {isLocationPopoverOpen && (
+        <div className="fixed inset-0 z-[99999] bg-purple-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in text-purple-950">
+          <div
+            className="relative w-full max-w-md bg-white opacity-100 rounded-3xl p-6 shadow-2xl border-2 border-pink-300 z-[100000]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-pink-100">
+              <div className="text-base font-bold font-serif text-purple-950 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-pink-500" />
+                <span>Edit Page Location</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLocationPopoverOpen(false)}
+                className="text-purple-400 hover:text-purple-700 p-1 rounded-full hover:bg-pink-50 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Confirmation Badge for Selected Location */}
+            {formData.location && (
+              <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 font-serif shadow-xs">
+                <div className="font-bold text-emerald-900 flex items-center gap-1.5 mb-1 text-sm">
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{formData.location.name}</span>
+                </div>
+                {typeof formData.location.latitude === "number" && typeof formData.location.longitude === "number" && (
+                  <div className="text-xs font-mono text-emerald-800/90">
+                    Latitude: {formData.location.latitude.toFixed(4)}° · Longitude: {formData.location.longitude.toFixed(4)}°
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GPS Detection */}
+            <button
+              type="button"
+              onClick={handleDetectPageLocation}
+              disabled={isDetectingLocation}
+              className="w-full mb-3.5 py-2.5 px-3 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 font-semibold text-xs border border-pink-200 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isDetectingLocation ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-pink-600" />
+                  <span>Detecting GPS Location...</span>
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-4 h-4 text-pink-600" />
+                  <span>Detect My Current Location</span>
+                </>
+              )}
+            </button>
+
+            {/* Custom Location Search */}
+            <form onSubmit={handleCustomLocationSubmit} className="mb-3.5">
+              <label className="text-[11px] uppercase font-bold text-purple-900/60 block mb-1">
+                Type any city or place name:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customLocationText}
+                  onChange={(e) => setCustomLocationText(e.target.value)}
+                  placeholder="Type Madurai, Tokyo, Paris..."
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-pink-50/60 border border-pink-200/80 text-xs text-purple-950 placeholder:text-purple-400 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            {/* Real-Time Dynamic Search Autocomplete Candidates */}
+            {isSearchingLocation && (
+              <div className="py-2 text-center text-xs font-serif text-pink-600 flex items-center justify-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-600" />
+                <span>Searching global geocoding registry...</span>
+              </div>
+            )}
+
+            {searchResults.length > 0 && (
+              <div className="mb-3.5 max-h-48 overflow-y-auto bg-white rounded-2xl border border-pink-200 p-1.5 shadow-md space-y-1 custom-scrollbar">
+                <div className="px-2 py-1 text-[10px] uppercase font-bold text-purple-900/60">
+                  Select your exact location match:
+                </div>
+                {searchResults.map((res, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectSearchResult(res)}
+                    className="w-full text-left p-2.5 rounded-xl text-xs hover:bg-pink-50 text-purple-950 flex flex-col cursor-pointer transition-colors border border-transparent hover:border-pink-200"
+                  >
+                    <span className="font-bold text-purple-950">📍 {res.displayName}</span>
+                    <span className="text-[10px] font-mono text-purple-900/60">
+                      Lat: {res.latitude.toFixed(4)}° · Lon: {res.longitude.toFixed(4)}°
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Worldwide Quick Suggestions */}
+            <div className="text-[11px] uppercase font-bold text-purple-900/60 mb-1.5">
+              Quick Worldwide Suggestions:
+            </div>
+            <div className="space-y-1 max-h-36 overflow-y-auto mb-3.5 pr-1 custom-scrollbar">
+              {POPULAR_LOCATIONS.map((loc) => (
+                <button
+                  key={loc.name}
+                  type="button"
+                  onClick={() => handleSelectLocation(loc)}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-serif flex items-center justify-between transition-colors cursor-pointer ${
+                    formData.location?.name === loc.name
+                      ? "bg-pink-100 text-pink-900 font-bold"
+                      : "hover:bg-pink-50 text-purple-950"
+                  }`}
+                >
+                  <span>📍 {loc.name}</span>
+                  <span className="text-[10px] text-purple-400">{loc.country}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Clear Location */}
+            {formData.location && (
+              <button
+                type="button"
+                onClick={handleClearPageLocation}
+                className="w-full pt-3 border-t border-pink-100 text-center text-xs text-rose-500 hover:text-rose-700 font-medium cursor-pointer"
+              >
+                ✕ Remove Location from this Page
+              </button>
+            )}
           </div>
         </div>
       )}
