@@ -464,7 +464,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Sticker Buttons (Visible ONLY during Edit mode) */}
+            {/* Sticker & Photo Buttons (Visible ONLY during Edit mode) */}
             {isEditing && (
               <>
                 <button
@@ -476,6 +476,21 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                   <Smile className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Sticker</span>
                 </button>
+
+                <label className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer">
+                  <ImageIcon className="w-3.5 h-3.5 text-pink-500" />
+                  <span className="hidden sm:inline">+ Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleAddPhoto(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </label>
 
                 {stickerHistory.length > 0 && (
                   <button
@@ -559,7 +574,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                     key={m.mood}
                     type="button"
                     onClick={() => setFormData({ ...formData, mood: m.mood, moodEmoji: m.emoji })}
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-serif transition-all cursor-pointer ${
+                    className={`px-2 py-0.5 rounded-full text-xs font-serif transition-all cursor-pointer ${
                       formData.mood === m.mood
                         ? "bg-pink-600 text-white font-bold scale-105"
                         : "bg-pink-50 text-purple-900 hover:bg-pink-100"
@@ -590,44 +605,42 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
           )}
         </div>
 
-        {/* Title (Consistent height container between View and Edit modes to prevent 1cm sticker shift) */}
+        {/* Title (Pixel-identical styling between View & Edit mode to eliminate sticker shift) */}
         {!isEditing ? (
           <h2 className="font-serif-title text-2xl sm:text-3xl font-bold text-purple-950 tracking-tight leading-snug">
             {formData.title || "Untitled Journal"}
           </h2>
         ) : (
-          <div>
-            <input
-              type="text"
-              value={formData.title || ""}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Title of this page..."
-              className="w-full text-2xl sm:text-3xl font-serif-title font-bold bg-pink-50/50 border border-pink-200 rounded-xl px-3 py-1.5 text-purple-950 focus:outline-none focus:ring-1 focus:ring-pink-400"
-            />
-          </div>
+          <input
+            type="text"
+            value={formData.title || ""}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            placeholder="Title of this page..."
+            className="w-full text-2xl sm:text-3xl font-serif-title font-bold text-purple-950 bg-pink-50/40 border-b border-pink-300 px-1 py-0.5 focus:outline-none focus:border-pink-500"
+          />
         )}
 
-        {/* Attached Photos / Polaroid Media Cards with Easy Delete and Hover Controls */}
-        <div className="py-1">
-          {formData.media && formData.media.length > 0 && (
+        {/* Attached Photos / Polaroid Media Cards */}
+        {formData.media && formData.media.length > 0 && (
+          <div className="py-1">
             <div className="flex flex-wrap gap-4 py-2">
               {formData.media.map((med) => (
                 <div
                   key={med.id}
                   className="relative group bg-white p-2.5 pb-4 rounded-xl shadow-md border border-pink-100 max-w-[260px] rotate-[-1deg] hover:rotate-0 transition-transform"
                 >
-                  {/* Washi Tape Graphic */}
                   <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-3 bg-pink-200/80 rounded-xs pointer-events-none" />
                   
-                  {/* Delete Photo Button (always accessible with hover and on mobile) */}
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePhoto(med.id)}
-                    title="Delete photo from page"
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md border border-white cursor-pointer opacity-90 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(med.id)}
+                      title="Delete photo from page"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md border border-white cursor-pointer opacity-90 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
 
                   <img
                     src={med.url}
@@ -636,7 +649,6 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                     referrerPolicy="no-referrer"
                   />
                   
-                  {/* Photo Caption */}
                   {isEditing ? (
                     <input
                       type="text"
@@ -658,30 +670,10 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Add Photo Button in Edit Mode */}
-          {isEditing && (
-            <div className="mt-2">
-              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-colors cursor-pointer">
-                <ImageIcon className="w-3.5 h-3.5 text-pink-500" />
-                <span>+ Add Photo / Polaroid</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleAddPhoto(e.target.files[0]);
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Journal Content (Lined Writing Area) */}
+        {/* Journal Content (Pixel-identical typography & line-height in Edit mode as View mode) */}
         {!isEditing ? (
           <div className="font-handwriting text-purple-950 text-base sm:text-lg md:text-xl leading-loose sm:leading-[2.2rem] whitespace-pre-line tracking-wide pt-1">
             {formData.content || (
@@ -691,18 +683,13 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
             )}
           </div>
         ) : (
-          <div>
-            <label className="text-[10px] uppercase font-bold text-pink-700 block mb-1">
-              Your Thoughts & Reflections:
-            </label>
-            <textarea
-              value={formData.content || ""}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Pour your heart onto the page..."
-              rows={12}
-              className="w-full text-base sm:text-lg font-serif bg-pink-50/40 border border-pink-200 rounded-2xl p-4 text-purple-950 leading-relaxed focus:outline-none focus:ring-1 focus:ring-pink-400"
-            />
-          </div>
+          <textarea
+            value={formData.content || ""}
+            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            placeholder="Pour your heart onto the page..."
+            rows={10}
+            className="w-full font-handwriting text-purple-950 text-base sm:text-lg md:text-xl leading-loose sm:leading-[2.2rem] tracking-wide pt-1 bg-transparent border-0 focus:outline-none resize-none focus:ring-0"
+          />
         )}
 
         {/* Gemini AI Structured Reflection Insight (if available) */}
