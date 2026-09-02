@@ -43,16 +43,14 @@ export function latitudeLongitudeToGlobePosition(
     return new THREE.Vector3(0, 0, 0);
   }
 
-  // Convert degrees to radians explicitly
+  // Convert degrees to radians matching Three.js SphereGeometry UV mapping
   const latRad = (lat * Math.PI) / 180;
-  const lonRad = (lon * Math.PI) / 180;
+  const lonRad = ((lon + 180) * Math.PI) / 180;
 
-  // Spherical projection aligned with Three.js standard SphereGeometry & Earth texture:
-  // Y-axis = North/South poles (+Y = North Pole, -Y = South Pole)
-  // X/Z plane = Equator. Longitude 0 (Greenwich) faces +Z.
-  const x = -radius * Math.cos(latRad) * Math.sin(lonRad);
+  const rh = radius * Math.cos(latRad);
+  const x = -rh * Math.cos(lonRad);
   const y = radius * Math.sin(latRad);
-  const z = radius * Math.cos(latRad) * Math.cos(lonRad);
+  const z = rh * Math.sin(lonRad);
 
   return new THREE.Vector3(x, y, z);
 }
