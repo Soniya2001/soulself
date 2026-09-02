@@ -122,7 +122,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
-    const width = container.clientWidth;
+    const width = container.clientWidth || 800;
     const height = container.clientHeight || 560;
 
     // Scene with clean white background
@@ -173,15 +173,19 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     const textureLoader = new THREE.TextureLoader();
 
     // 1. Photorealistic Earth Surface (Blue Marble)
-    const earthMap = textureLoader.load("/textures/earth_atmos_2048.jpg", () => {
-      renderer.render(scene, camera);
+    const earthMap = textureLoader.load("/textures/earth_atmos_2048.jpg", (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
     });
-    earthMap.colorSpace = THREE.SRGBColorSpace;
 
     const earthSpecularMap = textureLoader.load("/textures/earth_specular_2048.jpg");
 
     const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
     const sphereMaterial = new THREE.MeshPhongMaterial({
+      color: 0x1d4ed8,
       map: earthMap,
       specularMap: earthSpecularMap,
       specular: new THREE.Color(0x38bdf8),
@@ -228,7 +232,10 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
     globeGroup.add(glowSphere);
 
     // 4. Photorealistic Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.2);
+    scene.add(hemiLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
