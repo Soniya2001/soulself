@@ -407,7 +407,6 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
               </button>
 
               {isLocationPopoverOpen && (
-              {isLocationPopoverOpen && (
                 <div className="fixed inset-0 z-50 bg-purple-950/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-purple-950">
                   <div
                     className="relative w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-pink-200"
