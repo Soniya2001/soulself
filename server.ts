@@ -33,12 +33,19 @@ let secretClient: SecretManagerServiceClient | null = null;
 async function getGeminiApiKey(): Promise<string | null> {
   if (cachedApiKey) return cachedApiKey;
 
-  // 1. Attempt to fetch from Google Cloud Secret Manager
+  // 1. Prioritize environment variable process.env.GEMINI_API_KEY
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0) {
+    cachedApiKey = process.env.GEMINI_API_KEY.trim();
+    console.log("🔑 Successfully loaded Gemini API key from environment variable");
+    return cachedApiKey;
+  }
+
+  // 2. Fall back to Google Cloud Secret Manager if configured
   try {
     if (!secretClient) {
       secretClient = new SecretManagerServiceClient();
     }
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT || "researchos-ai";
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || "buildathon-504708";
     const secretName =
       process.env.GEMINI_SECRET_NAME || `projects/${projectId}/secrets/GEMINI_API_KEY/versions/latest`;
 
@@ -50,14 +57,7 @@ async function getGeminiApiKey(): Promise<string | null> {
       return cachedApiKey;
     }
   } catch (smErr: any) {
-    // Non-fatal: fall through to environment variable fallback
-    // (e.g. during local dev or when container has GEMINI_API_KEY set)
-  }
-
-  // 2. Fall back to process.env.GEMINI_API_KEY
-  if (process.env.GEMINI_API_KEY) {
-    cachedApiKey = process.env.GEMINI_API_KEY;
-    return cachedApiKey;
+    // Secret manager fallback non-fatal
   }
 
   return null;
@@ -74,6 +74,48 @@ async function getGenAI(): Promise<GoogleGenAI | null> {
       },
     },
   });
+}
+
+const CANDIDATE_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+
+async function safeGenerateContent(
+  ai: GoogleGenAI,
+  params: { contents: any; config?: any }
+) {
+  let lastError: any = null;
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const res = await ai.models.generateContent({
+        model,
+        ...params,
+      });
+      return res;
+    } catch (err: any) {
+      console.warn(`[Gemini Model ${model} Warning]:`, err?.message || err);
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
+
+async function safeGenerateContentStream(
+  ai: GoogleGenAI,
+  params: { contents: any; config?: any }
+) {
+  let lastError: any = null;
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const res = await ai.models.generateContentStream({
+        model,
+        ...params,
+      });
+      return res;
+    } catch (err: any) {
+      console.warn(`[Gemini Stream Model ${model} Warning]:`, err?.message || err);
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 // Middleware: Authenticate requests using Firebase ID Token
@@ -154,8 +196,7 @@ Provide a short, deeply supportive, non-clinical reflective observation (2 to 3 
 Do NOT give medical, clinical, or psychiatric diagnoses.
 Keep it cozy, encouraging, and poetic, suitable for an elegant personal diary.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: prompt,
       });
 
@@ -210,8 +251,7 @@ Guidelines:
 - Never give clinical psychological or medical assessments.
 - Use soft emojis like 🌸, ✨, 🌿, 💜, ☁️ naturally.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: formattedHistory,
         config: {
           systemInstruction,
@@ -268,8 +308,7 @@ Create a structured JSON summary with:
 - sentiment (strictly one of: "Positive", "Neutral", "Negative", "Mixed")
 `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -451,8 +490,7 @@ Return JSON with:
 - reasoning: a brief 1-sentence friendly explanation of why these fit.
 `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -518,8 +556,7 @@ User's Reflection Prompt / Question:
 
 Provide a warm, inspiring 2-3 sentence reflection prompt or gentle starter paragraph that helps the user evoke sensory details (sounds, weather, emotions, gratitude) and weave this photo into their life story. Keep it tender, cozy, and poetic.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: prompt,
       });
 
@@ -885,8 +922,7 @@ ${journalSnippet}`;
         isClosed = true;
       });
 
-      const responseStream = await ai.models.generateContentStream({
-        model: "gemini-3.7-flash",
+      const responseStream = await safeGenerateContentStream(ai, {
         contents: formattedHistory,
         config: {
           systemInstruction,
@@ -1005,8 +1041,7 @@ ${journalSnippet}`;
       const formattedHistory = formatAyraHistoryForGemini(userMessages);
       const systemInstruction = buildAyraSystemInstruction(userDisplayName, mode, journalContext);
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: formattedHistory,
         config: {
           systemInstruction,
@@ -1075,8 +1110,7 @@ Create a structured JSON with:
 - categories: 1 to 3 category tags from ["Personal", "Reflection", "Growth", "Life", "Work", "Relationships", "Mindfulness", "Creativity"].
 `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+      const response = await safeGenerateContent(ai, {
         contents: prompt,
         config: {
           responseMimeType: "application/json",
