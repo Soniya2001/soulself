@@ -101,7 +101,7 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
   app.use(express.json({ limit: "5mb" }));
 
