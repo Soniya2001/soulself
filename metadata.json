@@ -1,0 +1,6 @@
+{
+  "name": "SoulSelf",
+  "description": "SoulSelf — A cozy, modern, elegant digital diary and AYRA AI companion with interactive sticker journaling, ambient soundscapes, and reflections.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

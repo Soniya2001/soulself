@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User-isolated namespace: strictly authorized to owner only
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /profile/{profileDoc} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /journals/{journalId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /memories/{memoryId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /conversations/{conversationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /ayraConversations/{conversationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Explicit fallback: reject any unmapped path
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

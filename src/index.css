@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --font-handwriting: 'Caveat', cursive, sans-serif;
+    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #FAF7F9;
+    color: #4A3B4E;
+    overflow-x: hidden;
+  }
+}
+
+.font-serif-title {
+  font-family: var(--font-serif);
+}
+
+.font-handwriting {
+  font-family: var(--font-handwriting);
+}
+
+.font-sans-ui {
+  font-family: var(--font-sans);
+}
+
+/* Editorial Glass & Surface Panels */
+.editorial-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+}
+
+.editorial-card-solid {
+  background: #FFFFFF;
+  border: 1px solid rgba(253, 232, 240, 0.7);
+  border-radius: 32px;
+}
+
+.editorial-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+}
+
+/* Notebook lined paper pattern */
+.diary-paper-lined {
+  background-color: #FEFCFB;
+  background-image: linear-gradient(#F3E8EE 1px, transparent 1px);
+  background-size: 100% 2.2rem;
+  line-height: 2.2rem;
+}
+
+/* Subtle diary paper texture */
+.diary-paper-texture {
+  background-color: #FFFDFD;
+  background-image: 
+    radial-gradient(#F5E6ED 0.75px, transparent 0.75px),
+    radial-gradient(#F8EEF3 0.75px, #FFFDFD 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+/* Soft frosted glass */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(244, 219, 232, 0.6);
+}
+
+.glass-panel-subtle {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(250, 232, 240, 0.8);
+}
+
+/* Soft petal float keyframe animations */
+@keyframes petalFloat {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(105vh) translateX(60px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gentleSway {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(2deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}
+
+.animate-sway {
+  animation: gentleSway 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+/* Custom soft scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FCF4F8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #F0CFDF;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E3B4CC;
+}
+

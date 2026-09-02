@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "User": {
+      "path": "users/{userId}",
+      "fields": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "customCategories": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Journal": {
+      "path": "users/{userId}/journals/{journalId}",
+      "fields": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "mood": { "type": "string" },
+        "moodEmoji": { "type": "string" },
+        "weather": { "type": "string" },
+        "weatherEmoji": { "type": "string" },
+        "categories": { "type": "array" },
+        "location": { "type": "object" },
+        "media": { "type": "array" },
+        "stickers": { "type": "array" },
+        "tags": { "type": "array" },
+        "isFavorite": { "type": "boolean" },
+        "isPinned": { "type": "boolean" },
+        "wordCount": { "type": "number" },
+        "sentiment": { "type": "string" },
+        "summary": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Memory": {
+      "path": "users/{userId}/memories/{memoryId}",
+      "fields": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "object" },
+        "source": { "type": "string" },
+        "sourceIdentifier": { "type": "string" },
+        "isImportedToJournal": { "type": "boolean" },
+        "journalId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Conversation": {
+      "path": "users/{userId}/conversations/{conversationId}",
+      "fields": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "journalId": { "type": "string" },
+        "title": { "type": "string" },
+        "messages": { "type": "array" },
+        "summary": { "type": "object" },
+        "emotion": { "type": "string" },
+        "sentiment": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "AyraConversation": {
+      "path": "users/{userId}/ayraConversations/{conversationId}",
+      "fields": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "mode": { "type": "string" },
+        "messages": { "type": "array" },
+        "isCrisisActive": { "type": "boolean" },
+        "reflectionDraft": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "AboutMe": {
+      "path": "users/{userId}/profile/aboutMe",
+      "fields": {
+        "name": { "type": "string" },
+        "age": { "type": "string" },
+        "dateOfBirth": { "type": "string" },
+        "favoriteFood": { "type": "string" },
+        "favoriteMovie": { "type": "string" },
+        "favoriteActor": { "type": "string" },
+        "favoriteMusic": { "type": "string" },
+        "favoriteBook": { "type": "string" },
+        "favoriteColor": { "type": "string" },
+        "favoritePlace": { "type": "string" },
+        "myBias": { "type": "string" },
+        "dreamQuote": { "type": "string" },
+        "hobbies": { "type": "string" },
+        "customFavorites": { "type": "array" },
+        "stickers": { "type": "array" },
+        "photoUrl": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "BucketList": {
+      "path": "users/{userId}/profile/bucketList",
+      "fields": {
+        "items": { "type": "array" },
+        "stickers": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  }
+}
