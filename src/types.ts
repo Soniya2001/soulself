@@ -10,6 +10,41 @@ export type MoodType =
 
 export type SentimentType = "Positive" | "Neutral" | "Negative" | "Mixed";
 
+export interface TrackerLegendItem {
+  id: string;
+  color: string; // Hex color code or tailwind color value
+  label: string; // User-defined meaning (e.g., "Summer", "Rainy", "Productive")
+}
+
+export interface TrackerDoc {
+  id: string;
+  userId: string;
+  name: string; // User-defined title (e.g. "My Year in Colors")
+  description?: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  legend: TrackerLegendItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TrackerEntryDoc {
+  date: string; // YYYY-MM-DD
+  legendId: string;
+  note?: string; // Optional daily note
+  updatedAt: string;
+}
+
+export interface TrackerStats {
+  activeDays: number;
+  markedDays: number;
+  currentStreak: number;
+  mostUsedLegendItem?: {
+    legend: TrackerLegendItem;
+    count: number;
+  };
+}
+
 export interface JournalLocation {
   name: string; // e.g. "Chennai", "Bangalore", "Singapore"
   country?: string;
@@ -70,6 +105,19 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface JournalMusicTrack {
+  provider: "spotify" | "itunes" | string;
+  providerTrackId: string;
+  title: string;
+  artist: string;
+  album: string;
+  artworkUrl: string;
+  externalUrl: string;
+  previewUrl?: string;
+  startTime?: number; // Start offset in seconds (default 0)
+  duration?: number; // Full track duration in seconds
+}
+
 export interface JournalEntry {
   id: string;
   userId?: string;
@@ -84,6 +132,7 @@ export interface JournalEntry {
   categories: string[]; // e.g. ["Personal", "Travel", "Work"]
   location?: JournalLocation;
   media?: JournalMedia[];
+  music?: JournalMusicTrack | null;
   stickers: StickerPlacement[];
   tags: string[];
   coverColor?: string;

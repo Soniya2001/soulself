@@ -181,8 +181,8 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
             onClick={() => setActiveTab("inbox")}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
               activeTab === "inbox"
-                ? "bg-purple-950 text-white shadow-xs"
-                : "text-purple-900/60 hover:text-purple-950"
+                ? "bg-pink-600 text-white shadow-xs"
+                : "text-purple-900/60 hover:text-pink-600"
             }`}
           >
             Memories ({memories.length})
@@ -191,8 +191,8 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
             onClick={() => setActiveTab("import")}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
               activeTab === "import"
-                ? "bg-purple-950 text-white shadow-xs"
-                : "text-purple-900/60 hover:text-purple-950"
+                ? "bg-pink-600 text-white shadow-xs"
+                : "text-purple-900/60 hover:text-pink-600"
             }`}
           >
             <UploadCloud className="w-3.5 h-3.5" />
@@ -202,8 +202,8 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
             onClick={() => setActiveTab("connections")}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
               activeTab === "connections"
-                ? "bg-purple-950 text-white shadow-xs"
-                : "text-purple-900/60 hover:text-purple-950"
+                ? "bg-pink-600 text-white shadow-xs"
+                : "text-purple-900/60 hover:text-pink-600"
             }`}
           >
             Social Connections 🔗
@@ -256,7 +256,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
               <button
                 onClick={() => setStatusFilter("ALL")}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                  statusFilter === "ALL" ? "bg-purple-950 text-white" : "text-purple-900/60 hover:bg-pink-50"
+                  statusFilter === "ALL" ? "bg-pink-600 text-white" : "text-purple-900/60 hover:bg-pink-50"
                 }`}
               >
                 All
@@ -264,7 +264,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
               <button
                 onClick={() => setStatusFilter("UNJOURNALED")}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                  statusFilter === "UNJOURNALED" ? "bg-purple-950 text-white" : "text-purple-900/60 hover:bg-pink-50"
+                  statusFilter === "UNJOURNALED" ? "bg-pink-600 text-white" : "text-purple-900/60 hover:bg-pink-50"
                 }`}
               >
                 ✨ Unwritten ({memories.filter((m) => !m.isImportedToJournal).length})
@@ -286,7 +286,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
               </p>
               <button
                 onClick={() => setActiveTab("import")}
-                className="px-6 py-2.5 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
               >
                 Upload a Photo Memory
               </button>
@@ -363,11 +363,11 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
 
                       <button
                         onClick={() => onAddMemoryToJournal(mem)}
-                        className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-purple-900 to-indigo-900 hover:from-purple-950 hover:to-indigo-950 text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Sparkles className="w-3 h-3 text-pink-300" />
+                        <Sparkles className="w-3 h-3 text-pink-200" />
                         <span>{mem.isImportedToJournal ? "Write Another Entry" : "Add to Journal"}</span>
-                        <ArrowRight className="w-3 h-3 text-pink-300" />
+                        <ArrowRight className="w-3 h-3 text-pink-200" />
                       </button>
                     </div>
                   </div>
@@ -549,7 +549,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
                     onClick={() => setUploadSource(src.key as any)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                       uploadSource === src.key
-                        ? "bg-purple-950 text-white border-purple-950"
+                        ? "bg-pink-600 text-white border-pink-600"
                         : "bg-white text-purple-900 border-pink-100 hover:bg-pink-50"
                     }`}
                   >
@@ -571,7 +571,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
               <button
                 type="submit"
                 disabled={!uploadImageUrl}
-                className="px-6 py-2.5 rounded-full bg-purple-950 hover:bg-purple-900 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
               >
                 Save to Memory Inbox
               </button>
@@ -634,7 +634,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
                 className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   connectedPlatforms.instagram.connected
                     ? "bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200"
-                    : "bg-purple-950 hover:bg-purple-900 text-white shadow-sm"
+                    : "bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
                 }`}
               >
                 {isConnectingPlatform === "instagram"
@@ -674,7 +674,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
                 className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   connectedPlatforms.facebook.connected
                     ? "bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200"
-                    : "bg-purple-950 hover:bg-purple-900 text-white shadow-sm"
+                    : "bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
                 }`}
               >
                 {isConnectingPlatform === "facebook"
@@ -714,7 +714,7 @@ export const MemoryInbox: React.FC<MemoryInboxProps> = ({
                 className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   connectedPlatforms.tiktok.connected
                     ? "bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200"
-                    : "bg-purple-950 hover:bg-purple-900 text-white shadow-sm"
+                    : "bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
                 }`}
               >
                 {isConnectingPlatform === "tiktok"

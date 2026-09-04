@@ -13,13 +13,61 @@ import {
 import { db } from "../lib/firebase";
 import {
   JournalEntry,
-  ConversationEntry,
   UserProfile,
-  SocialMemoryItem,
-  AyraConversation,
   AboutMeData,
   BucketListData,
+  AyraConversation,
+  TrackerDoc,
+  TrackerEntryDoc,
 } from "../types";
+
+/**
+ * Default User Profile fallback object
+ */
+export const DEFAULT_USER_PROFILE: UserProfile = {
+  name: "Beloved Journaler",
+  greetingTitle: "Beloved Journaler",
+  bio: "Writing my thoughts, finding peace in small moments, and growing with SoulSelf.",
+  soundEnabled: false,
+  themePreference: "soft-pink",
+  favoriteStickers: ["🌸", "✨", "🦋", "💜", "☕"],
+};
+
+/**
+ * Default About Me fallback object
+ */
+export const DEFAULT_ABOUT_ME: AboutMeData = {
+  name: "SoulSelf Companion",
+  favoriteColor: "Soft Pink",
+  favoritePlace: "Sanctuary Haven",
+  dreamQuote: "Peace comes from within. Do not seek it without.",
+};
+
+/**
+ * Default Bucket List fallback object
+ */
+export const DEFAULT_BUCKET_LIST: BucketListData = {
+  items: [
+    {
+      id: "b-1",
+      text: "Write 30 daily journal entries in SoulSelf",
+      isCompleted: false,
+      category: "Personal Growth",
+    },
+    {
+      id: "b-2",
+      text: "Complete a full year of color mood tracking",
+      isCompleted: false,
+      category: "Mindfulness",
+    },
+    {
+      id: "b-3",
+      text: "Explore 5 serene ambient soundscapes",
+      isCompleted: true,
+      category: "Relaxation",
+    },
+  ],
+};
 
 /**
  * Real-time subscription to current user's private journals in /users/{userId}/journals
@@ -57,13 +105,14 @@ export function subscribeToUserJournals(
           categories: data.categories || ["Personal"],
           location: data.location || undefined,
           media: data.media || [],
+          music: data.music || null,
           stickers: data.stickers || [],
           tags: data.tags || [],
-          coverColor: data.coverColor,
-          summary: data.summary,
-          geminiChat: data.geminiChat,
+          coverColor: data.coverColor || "pink",
+          summary: data.summary || undefined,
+          geminiChat: data.geminiChat || [],
           wordCount: data.wordCount || 0,
-          sentiment: data.sentiment,
+          sentiment: data.sentiment || undefined,
           isFavorite: !!data.isFavorite,
           isPinned: !!data.isPinned,
           createdAt: data.createdAt || new Date().toISOString(),
@@ -102,6 +151,7 @@ export async function saveJournalEntryDoc(userId: string, entry: JournalEntry): 
     categories: entry.categories || ["Personal"],
     location: entry.location || null,
     media: entry.media || [],
+    music: entry.music || null,
     stickers: entry.stickers || [],
     tags: entry.tags || [],
     coverColor: entry.coverColor || "pink",
@@ -131,183 +181,64 @@ export async function deleteJournalEntryDoc(userId: string, entryId: string): Pr
 /**
  * Toggle favorite status
  */
-export async function toggleJournalFavoriteDoc(userId: string, entryId: string, isFavorite: boolean): Promise<void> {
-  if (!userId) throw new Error("Authentication required.");
+export async function toggleFavoriteJournalDoc(
+  userId: string,
+  entryId: string,
+  currentFavoriteState: boolean
+): Promise<void> {
+  if (!userId) return;
   const journalRef = doc(db, "users", userId, "journals", entryId);
-  await setDoc(journalRef, { isFavorite, updatedAt: new Date().toISOString() }, { merge: true });
+  await setDoc(journalRef, { isFavorite: !currentFavoriteState, updatedAt: new Date().toISOString() }, { merge: true });
 }
+
+export const toggleJournalFavoriteDoc = toggleFavoriteJournalDoc;
 
 /**
  * Toggle pinned status
  */
-export async function toggleJournalPinnedDoc(userId: string, entryId: string, isPinned: boolean): Promise<void> {
-  if (!userId) throw new Error("Authentication required.");
-  const journalRef = doc(db, "users", userId, "journals", entryId);
-  await setDoc(journalRef, { isPinned, updatedAt: new Date().toISOString() }, { merge: true });
-}
-
-/**
- * Real-time subscription to current user's social memories in /users/{userId}/memories
- */
-export function subscribeToUserMemories(
+export async function togglePinnedJournalDoc(
   userId: string,
-  onUpdate: (memories: SocialMemoryItem[]) => void,
-  onError?: (error: any) => void
-) {
-  if (!userId) {
-    onUpdate([]);
-    return () => {};
-  }
-
-  const memoriesRef = collection(db, "users", userId, "memories");
-  const q = query(memoriesRef, orderBy("date", "desc"));
-
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const memories: SocialMemoryItem[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        memories.push({
-          id: docSnap.id,
-          userId,
-          imageUrl: data.imageUrl || "",
-          caption: data.caption || "",
-          date: data.date || new Date().toISOString().split("T")[0],
-          time: data.time || "12:00 PM",
-          location: data.location || undefined,
-          source: data.source || "manual_upload",
-          sourceIdentifier: data.sourceIdentifier,
-          isImportedToJournal: !!data.isImportedToJournal,
-          journalId: data.journalId,
-          createdAt: data.createdAt || new Date().toISOString(),
-        });
-      });
-      onUpdate(memories);
-    },
-    (err) => {
-      console.error("Firestore memories subscription error:", err);
-      if (onError) onError(err);
-    }
-  );
-
-  return unsubscribe;
-}
-
-/**
- * Save social memory item in /users/{userId}/memories/{memoryId}
- */
-export async function saveSocialMemoryDoc(userId: string, memory: SocialMemoryItem): Promise<void> {
-  if (!userId) throw new Error("Authentication required to save memory.");
-  const memoryRef = doc(db, "users", userId, "memories", memory.id);
-  await setDoc(
-    memoryRef,
-    {
-      ...memory,
-      userId,
-      timestamp: serverTimestamp(),
-    },
-    { merge: true }
-  );
-}
-
-/**
- * Delete social memory item
- */
-export async function deleteSocialMemoryDoc(userId: string, memoryId: string): Promise<void> {
-  if (!userId) throw new Error("Authentication required.");
-  const memoryRef = doc(db, "users", userId, "memories", memoryId);
-  await deleteDoc(memoryRef);
-}
-
-/**
- * Mark memory item as imported to a journal
- */
-export async function markMemoryImportedDoc(userId: string, memoryId: string, journalId: string): Promise<void> {
+  entryId: string,
+  currentPinnedState: boolean
+): Promise<void> {
   if (!userId) return;
-  const memoryRef = doc(db, "users", userId, "memories", memoryId);
-  await setDoc(
-    memoryRef,
-    {
-      isImportedToJournal: true,
-      journalId,
-    },
-    { merge: true }
-  );
+  const journalRef = doc(db, "users", userId, "journals", entryId);
+  await setDoc(journalRef, { isPinned: !currentPinnedState, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
 /**
- * Real-time subscription to current user's multi-turn conversations in /users/{userId}/conversations
+ * Requirement 9: Repair invalid/stale journal location coordinates in Firestore
  */
-export function subscribeToUserConversations(
-  userId: string,
-  onUpdate: (conversations: ConversationEntry[]) => void,
-  onError?: (error: any) => void
-) {
-  if (!userId) {
-    onUpdate([]);
-    return () => {};
-  }
+export async function repairJournalLocationCoords(
+  entries: JournalEntry[]
+): Promise<{ repaired: JournalEntry[]; hasChanges: boolean }> {
+  let hasChanges = false;
 
-  const convosRef = collection(db, "users", userId, "conversations");
-  const q = query(convosRef, orderBy("updatedAt", "desc"));
+  const isValidCoord = (val: any) => typeof val === "number" && !isNaN(val) && val >= -180 && val <= 180;
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const convos: ConversationEntry[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        convos.push({
-          id: docSnap.id,
-          userId,
-          journalId: data.journalId,
-          title: data.title || "SoulSelf Conversation",
-          messages: data.messages || [],
-          summary: data.summary,
-          emotion: data.emotion,
-          sentiment: data.sentiment,
-          createdAt: data.createdAt || new Date().toISOString(),
-          updatedAt: data.updatedAt || new Date().toISOString(),
-        });
-      });
-      onUpdate(convos);
-    },
-    (err) => {
-      console.error("Firestore conversations subscription error:", err);
-      if (onError) onError(err);
+  const repaired = entries.map((entry) => {
+    if (entry.location) {
+      const latValid = isValidCoord(entry.location.latitude);
+      const lngValid = isValidCoord(entry.location.longitude);
+
+      if (!latValid || !lngValid) {
+        hasChanges = true;
+        const validLat = latValid ? entry.location.latitude : 40.7128;
+        const validLng = lngValid ? entry.location.longitude : -74.006;
+        return {
+          ...entry,
+          location: {
+            name: entry.location.name || "Sanctuary Haven",
+            latitude: validLat,
+            longitude: validLng,
+          },
+        };
+      }
     }
-  );
+    return entry;
+  });
 
-  return unsubscribe;
-}
-
-/**
- * Save multi-turn conversation doc
- */
-export async function saveConversationDoc(userId: string, conversation: ConversationEntry): Promise<void> {
-  if (!userId) throw new Error("Authentication required to save conversation.");
-  const convoRef = doc(db, "users", userId, "conversations", conversation.id);
-
-  await setDoc(
-    convoRef,
-    {
-      ...conversation,
-      userId,
-      updatedAt: new Date().toISOString(),
-      timestamp: serverTimestamp(),
-    },
-    { merge: true }
-  );
-}
-
-/**
- * Delete a conversation
- */
-export async function deleteConversationDoc(userId: string, convoId: string): Promise<void> {
-  if (!userId) throw new Error("Authentication required to delete conversation.");
-  const convoRef = doc(db, "users", userId, "conversations", convoId);
-  await deleteDoc(convoRef);
+  return { repaired, hasChanges };
 }
 
 /**
@@ -316,7 +247,14 @@ export async function deleteConversationDoc(userId: string, convoId: string): Pr
 export async function saveUserProfileDoc(userId: string, profile: Partial<UserProfile>): Promise<void> {
   if (!userId) return;
   const userRef = doc(db, "users", userId);
-  await setDoc(userRef, { ...profile, updatedAt: new Date().toISOString() }, { merge: true });
+  const cleanProfile: Record<string, any> = {};
+  Object.entries(profile).forEach(([key, val]) => {
+    if (val !== undefined) {
+      cleanProfile[key] = val;
+    }
+  });
+  cleanProfile.updatedAt = new Date().toISOString();
+  await setDoc(userRef, cleanProfile, { merge: true });
 }
 
 export async function getUserProfileDoc(userId: string): Promise<UserProfile | null> {
@@ -327,6 +265,15 @@ export async function getUserProfileDoc(userId: string): Promise<UserProfile | n
     return snap.data() as UserProfile;
   }
   return null;
+}
+
+/**
+ * Save general conversation document
+ */
+export async function saveConversationDoc(userId: string, convo: any): Promise<void> {
+  if (!userId || !convo.id) return;
+  const ref = doc(db, "users", userId, "conversations", convo.id);
+  await setDoc(ref, { ...convo, userId, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
 /**
@@ -354,13 +301,11 @@ export function subscribeToUserAyraConversations(
         convos.push({
           id: docSnap.id,
           userId,
-          title: data.title || "Conversation with AYRA",
+          title: data.title || "Untitled Chat",
           mode: data.mode || "just-talk",
-          messages: data.messages || [],
-          isCrisisActive: !!data.isCrisisActive,
-          reflectionDraft: data.reflectionDraft || undefined,
           createdAt: data.createdAt || new Date().toISOString(),
           updatedAt: data.updatedAt || new Date().toISOString(),
+          messages: data.messages || [],
         });
       });
       onUpdate(convos);
@@ -447,16 +392,9 @@ export async function getAboutMeDoc(userId: string): Promise<AboutMeData | null>
 }
 
 export async function saveAboutMeDoc(userId: string, data: AboutMeData): Promise<void> {
-  if (!userId) throw new Error("Authentication required to save About Me.");
+  if (!userId) return;
   const aboutMeRef = doc(db, "users", userId, "profile", "aboutMe");
-  await setDoc(
-    aboutMeRef,
-    {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true }
-  );
+  await setDoc(aboutMeRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
 /**
@@ -471,9 +409,9 @@ export function subscribeToBucketList(
     onUpdate(null);
     return () => {};
   }
-  const bucketListRef = doc(db, "users", userId, "profile", "bucketList");
+  const bucketRef = doc(db, "users", userId, "profile", "bucketList");
   return onSnapshot(
-    bucketListRef,
+    bucketRef,
     (snap) => {
       if (snap.exists()) {
         onUpdate(snap.data() as BucketListData);
@@ -488,28 +426,329 @@ export function subscribeToBucketList(
   );
 }
 
-export async function getBucketListDoc(userId: string): Promise<BucketListData | null> {
-  if (!userId) return null;
-  const bucketListRef = doc(db, "users", userId, "profile", "bucketList");
-  const snap = await getDoc(bucketListRef);
-  if (snap.exists()) {
-    return snap.data() as BucketListData;
-  }
-  return null;
+export async function saveBucketListDoc(userId: string, data: BucketListData): Promise<void> {
+  if (!userId) return;
+  const bucketRef = doc(db, "users", userId, "profile", "bucketList");
+  await setDoc(bucketRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
-export async function saveBucketListDoc(userId: string, data: BucketListData): Promise<void> {
-  if (!userId) throw new Error("Authentication required to save Bucket List.");
-  const bucketListRef = doc(db, "users", userId, "profile", "bucketList");
-  await setDoc(
-    bucketListRef,
-    {
-      ...data,
-      updatedAt: new Date().toISOString(),
+/**
+ * Profile-Scoped Yearly Color Trackers Document stored at /users/{userId}/profile/trackersData
+ * Uses /users/{userId}/profile/{profileDoc} path which is fully authorized by Firestore security rules.
+ */
+interface TrackersProfileDoc {
+  trackers: TrackerDoc[];
+  entries: Record<string, Record<string, TrackerEntryDoc>>; // trackerId -> dateStr -> TrackerEntryDoc
+  updatedAt: string;
+}
+
+const getLocalTrackersKey = (userId: string) => `soulself_trackers_${userId}`;
+
+function getLocalTrackersData(userId: string): TrackersProfileDoc {
+  try {
+    const raw = localStorage.getItem(getLocalTrackersKey(userId));
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { trackers: [], entries: {}, updatedAt: new Date().toISOString() };
+}
+
+function saveLocalTrackersData(userId: string, data: TrackersProfileDoc) {
+  try {
+    localStorage.setItem(getLocalTrackersKey(userId), JSON.stringify(data));
+  } catch (e) {}
+}
+
+function sanitizeFirestoreData<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const clean: Record<string, any> = {};
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        clean[key] = value.map((item) =>
+          typeof item === "object" && item !== null ? sanitizeFirestoreData(item) : item
+        );
+      } else if (typeof value === "object" && value !== null && !(value instanceof Date)) {
+        clean[key] = sanitizeFirestoreData(value);
+      } else {
+        clean[key] = value;
+      }
+    }
+  });
+  return clean;
+}
+
+export function subscribeToUserTrackers(
+  userId: string,
+  onUpdate: (trackers: TrackerDoc[]) => void,
+  onError?: (error: any) => void
+) {
+  if (!userId) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  // Load from local storage immediately as instant baseline
+  const local = getLocalTrackersData(userId);
+  onUpdate(local.trackers);
+
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  const unsubscribe = onSnapshot(
+    docRef,
+    (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as TrackersProfileDoc;
+        const trackersList = data.trackers || [];
+        saveLocalTrackersData(userId, data);
+        onUpdate(trackersList);
+      } else {
+        onUpdate(local.trackers);
+      }
     },
-    { merge: true }
+    (err) => {
+      console.warn("Firestore trackers subscription fallback to local:", err?.message || err);
+      onUpdate(getLocalTrackersData(userId).trackers);
+      if (onError) onError(err);
+    }
+  );
+
+  return unsubscribe;
+}
+
+export async function saveTrackerDoc(userId: string, tracker: TrackerDoc): Promise<void> {
+  if (!userId) throw new Error("Authentication required to save tracker.");
+
+  let currentData = getLocalTrackersData(userId);
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      currentData = snap.data() as TrackersProfileDoc;
+    }
+  } catch (e) {}
+
+  const trackers = currentData.trackers || [];
+  const idx = trackers.findIndex((t) => t.id === tracker.id);
+
+  if (idx >= 0) {
+    trackers[idx] = { ...trackers[idx], ...tracker, updatedAt: new Date().toISOString() };
+  } else {
+    trackers.unshift({ ...tracker, updatedAt: new Date().toISOString() });
+  }
+
+  const updatedDoc: TrackersProfileDoc = {
+    ...currentData,
+    trackers,
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveLocalTrackersData(userId, updatedDoc);
+
+  try {
+    await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
+  } catch (err: any) {
+    console.warn("Saved tracker locally (Firestore sync notice):", err?.message || err);
+  }
+}
+
+export async function deleteTrackerDoc(userId: string, trackerId: string): Promise<void> {
+  if (!userId) return;
+  let currentData = getLocalTrackersData(userId);
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      currentData = snap.data() as TrackersProfileDoc;
+    }
+  } catch (e) {}
+
+  const trackers = (currentData.trackers || []).filter((t) => t.id !== trackerId);
+  const entries = { ...(currentData.entries || {}) };
+  delete entries[trackerId];
+
+  const updatedDoc: TrackersProfileDoc = {
+    ...currentData,
+    trackers,
+    entries,
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveLocalTrackersData(userId, updatedDoc);
+
+  try {
+    await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
+  } catch (e) {}
+}
+
+export function subscribeToTrackerEntries(
+  userId: string,
+  trackerId: string,
+  onUpdate: (entries: Record<string, TrackerEntryDoc>) => void,
+  onError?: (err: any) => void
+) {
+  if (!userId || !trackerId) {
+    onUpdate({});
+    return () => {};
+  }
+
+  const local = getLocalTrackersData(userId);
+  onUpdate(local.entries?.[trackerId] || {});
+
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as TrackersProfileDoc;
+        const trackerEntries = data.entries?.[trackerId] || {};
+        saveLocalTrackersData(userId, data);
+        onUpdate(trackerEntries);
+      } else {
+        onUpdate(local.entries?.[trackerId] || {});
+      }
+    },
+    (err) => {
+      onUpdate(getLocalTrackersData(userId).entries?.[trackerId] || {});
+      if (onError) onError(err);
+    }
   );
 }
 
+export async function saveTrackerEntryDoc(
+  userId: string,
+  trackerId: string,
+  entry: TrackerEntryDoc
+): Promise<void> {
+  if (!userId || !trackerId) return;
 
+  let currentData = getLocalTrackersData(userId);
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
 
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      currentData = snap.data() as TrackersProfileDoc;
+    }
+  } catch (e) {}
+
+  const entries = { ...(currentData.entries || {}) };
+  const trackerEntries = { ...(entries[trackerId] || {}) };
+
+  if (!entry.legendId && !entry.note) {
+    delete trackerEntries[entry.date];
+  } else {
+    trackerEntries[entry.date] = {
+      date: entry.date,
+      legendId: entry.legendId || "",
+      note: entry.note || "",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  entries[trackerId] = trackerEntries;
+
+  const updatedDoc: TrackersProfileDoc = {
+    ...currentData,
+    entries,
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveLocalTrackersData(userId, updatedDoc);
+
+  try {
+    await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
+  } catch (e) {}
+}
+
+export async function deleteTrackerEntryDoc(
+  userId: string,
+  trackerId: string,
+  date: string
+): Promise<void> {
+  await saveTrackerEntryDoc(userId, trackerId, {
+    date,
+    legendId: "",
+    note: "",
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function batchClearLegendDoc(
+  userId: string,
+  trackerId: string,
+  legendId: string
+): Promise<void> {
+  if (!userId || !trackerId) return;
+
+  let currentData = getLocalTrackersData(userId);
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) currentData = snap.data() as TrackersProfileDoc;
+  } catch (e) {}
+
+  const entries = { ...(currentData.entries || {}) };
+  const trackerEntries = { ...(entries[trackerId] || {}) };
+
+  Object.keys(trackerEntries).forEach((dateKey) => {
+    if (trackerEntries[dateKey].legendId === legendId) {
+      delete trackerEntries[dateKey];
+    }
+  });
+
+  entries[trackerId] = trackerEntries;
+
+  const updatedDoc: TrackersProfileDoc = {
+    ...currentData,
+    entries,
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveLocalTrackersData(userId, updatedDoc);
+  try {
+    await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
+  } catch (e) {}
+}
+
+export async function batchReassignLegendDoc(
+  userId: string,
+  trackerId: string,
+  oldLegendId: string,
+  newLegendId: string
+): Promise<void> {
+  if (!userId || !trackerId) return;
+
+  let currentData = getLocalTrackersData(userId);
+  const docRef = doc(db, "users", userId, "profile", "trackersData");
+
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) currentData = snap.data() as TrackersProfileDoc;
+  } catch (e) {}
+
+  const entries = { ...(currentData.entries || {}) };
+  const trackerEntries = { ...(entries[trackerId] || {}) };
+
+  Object.keys(trackerEntries).forEach((dateKey) => {
+    if (trackerEntries[dateKey].legendId === oldLegendId) {
+      trackerEntries[dateKey].legendId = newLegendId;
+      trackerEntries[dateKey].updatedAt = new Date().toISOString();
+    }
+  });
+
+  entries[trackerId] = trackerEntries;
+
+  const updatedDoc: TrackersProfileDoc = {
+    ...currentData,
+    entries,
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveLocalTrackersData(userId, updatedDoc);
+  try {
+    await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
+  } catch (e) {}
+}

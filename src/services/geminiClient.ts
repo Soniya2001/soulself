@@ -70,6 +70,40 @@ export async function getDashboardReflection(
 }
 
 /**
+ * Fetch Gemini observation & reflection for a dynamic yearly tracker
+ */
+export async function getTrackerReflection(params: {
+  trackerName: string;
+  trackerDescription?: string;
+  legend: { color: string; label: string }[];
+  counts: Record<string, number>;
+  entries: { date: string; label: string; note?: string }[];
+  userName: string;
+}): Promise<{ observation: string; pattern: string; suggestion: string }> {
+  try {
+    const data = await authorizedFetch("/api/gemini/tracker-reflect", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+    return (
+      data || {
+        observation: "Each day marked in your tracker builds a visual tapestry of your year.",
+        pattern: "A steady presence across your active calendar dates.",
+        suggestion: "Continue filling your year at your own comfortable pace.",
+      }
+    );
+  } catch (err: any) {
+    console.error("Tracker reflection error:", err);
+    return {
+      observation: "Each day marked in your tracker represents a distinct, meaningful moment.",
+      pattern: "A gentle rhythm of tracking throughout your active days.",
+      suggestion: "Take a moment to appreciate your creative self-expression.",
+    };
+  }
+}
+
+
+/**
  * Send multi-turn chat message to Gemini
  */
 export async function sendGeminiChatMessage(

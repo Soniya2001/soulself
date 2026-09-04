@@ -92,7 +92,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
             <button
               type="submit"
               disabled={!newCategoryName.trim()}
-              className="px-4 py-2 rounded-full bg-purple-950 hover:bg-purple-900 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
@@ -156,7 +156,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
         <div className="mt-6 pt-4 border-t border-pink-100 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
+            className="px-6 py-2 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
           >
             Done
           </button>

@@ -342,15 +342,15 @@ export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
 
                   {/* Photo count badge if multiple photos exist */}
                   {photoCount > 1 && (
-                    <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-purple-950/80 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
-                      <Camera className="w-3 h-3 text-pink-300" />
+                    <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-pink-600/90 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                      <Camera className="w-3 h-3 text-pink-200" />
                       <span>{photoCount} photos</span>
                     </div>
                   )}
 
                   {/* Mood Emoji Badge */}
                   <div className="absolute top-2.5 left-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md shadow-xs flex items-center justify-center text-sm border border-pink-200">
-                    {entry.moodEmoji || "💜"}
+                    {entry.moodEmoji || "💖"}
                   </div>
                 </div>
 
@@ -388,9 +388,9 @@ export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
                         e.stopPropagation();
                         onSelectEntry(entry);
                       }}
-                      className="w-full mt-2 py-2 px-3 rounded-full bg-purple-950 hover:bg-purple-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all hover:scale-101 active:scale-99 cursor-pointer"
+                      className="w-full mt-2 py-2 px-3 rounded-full bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all hover:scale-101 active:scale-99 cursor-pointer"
                     >
-                      <BookOpen className="w-3.5 h-3.5 text-pink-300" />
+                      <BookOpen className="w-3.5 h-3.5 text-pink-200" />
                       <span>View Journal</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>

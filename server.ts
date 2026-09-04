@@ -157,6 +157,128 @@ async function startServer() {
     });
   });
 
+  // Spotify Authentication & Catalog Search Backend Service
+  let spotifyAccessToken: string | null = null;
+  let spotifyTokenExpiresAt = 0;
+
+  async function getSpotifyAccessToken(): Promise<string | null> {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    if (!clientId || !clientSecret) return null;
+
+    if (spotifyAccessToken && Date.now() < spotifyTokenExpiresAt - 60000) {
+      return spotifyAccessToken;
+    }
+
+    try {
+      const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+      const res = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "grant_type=client_credentials",
+      });
+
+      if (!res.ok) return null;
+      const data = (await res.json()) as any;
+      spotifyAccessToken = data.access_token;
+      spotifyTokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+      return spotifyAccessToken;
+    } catch (err) {
+      console.warn("[Spotify Auth Warning]:", err);
+      return null;
+    }
+  }
+
+  async function searchSpotifyCatalog(query: string) {
+    const token = await getSpotifyAccessToken();
+    if (!token) return null;
+
+    try {
+      const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20`;
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) return null;
+      const data = (await res.json()) as any;
+      if (!data.tracks || !Array.isArray(data.tracks.items)) return [];
+
+      return data.tracks.items.map((item: any) => ({
+        provider: "spotify",
+        providerTrackId: item.id,
+        title: item.name,
+        artist: item.artists ? item.artists.map((a: any) => a.name).join(", ") : "Unknown Artist",
+        album: item.album ? item.album.name : "Single",
+        artworkUrl: item.album?.images?.[0]?.url || item.album?.images?.[1]?.url || "",
+        externalUrl: item.external_urls?.spotify || `https://open.spotify.com/track/${item.id}`,
+        previewUrl: item.preview_url || undefined,
+        duration: item.duration_ms ? Math.round(item.duration_ms / 1000) : 210,
+      }));
+    } catch (err) {
+      console.warn("[Spotify Search Warning]:", err);
+      return null;
+    }
+  }
+
+  async function searchITunesCatalog(query: string, targetProvider: string = "spotify") {
+    try {
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=20`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = (await res.json()) as any;
+      if (!data.results || !Array.isArray(data.results)) return [];
+
+      return data.results.map((item: any) => ({
+        provider: targetProvider,
+        providerTrackId: item.trackId ? String(item.trackId) : item.artistName,
+        title: item.trackName || "Untitled Track",
+        artist: item.artistName || "Unknown Artist",
+        album: item.collectionName || "Single",
+        artworkUrl: item.artworkUrl100 ? item.artworkUrl100.replace("100x100bb", "600x600bb") : "",
+        externalUrl: item.trackViewUrl || "https://music.apple.com",
+        previewUrl: item.previewUrl || undefined,
+        duration: item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 210,
+      }));
+    } catch (err) {
+      console.warn("[iTunes Fallback Search Warning]:", err);
+      return [];
+    }
+  }
+
+  // Dynamic Provider Music Search Route
+  app.get("/api/music/search", async (req, res) => {
+    const q = req.query.q as string;
+    const provider = (req.query.provider as string) || "spotify";
+
+    if (!q || !q.trim()) {
+      return res.json({ tracks: [] });
+    }
+
+    try {
+      let tracks: any[] | null = null;
+
+      if (provider === "spotify") {
+        // Try official Spotify Web API first if credentials exist
+        tracks = await searchSpotifyCatalog(q.trim());
+      }
+
+      // If Spotify credentials not provided or failed, fall back to global music catalog
+      if (!tracks) {
+        tracks = await searchITunesCatalog(q.trim(), provider);
+      }
+
+      return res.json({ tracks });
+    } catch (err: any) {
+      console.error("[Music Search Endpoint Error]:", err?.message || err);
+      return res.status(500).json({ error: "Failed to search music catalog", tracks: [] });
+    }
+  });
+
   // 1. Authenticated Gemini Reflection for User's Journals
   app.post("/api/gemini/reflect", requireAuth, async (req, res) => {
     try {
@@ -210,6 +332,107 @@ Keep it cozy, encouraging, and poetic, suitable for an elegant personal diary.`;
       res.status(500).json({
         reflection:
           "Your recent entries show moments of thoughtful reflection and personal growth. Honoring every feeling brings deeper clarity.",
+      });
+    }
+  });
+
+  // 1b. Authenticated Gemini Reflection for Dynamic Yearly Trackers
+  app.post("/api/gemini/tracker-reflect", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { trackerName, trackerDescription, legend, counts, entries, userName } = req.body;
+      const ai = await getGenAI();
+
+      const userDisplayName = userName || user.name || "Beloved Friend";
+
+      const legendSummary = Array.isArray(legend)
+        ? legend.map((l: any) => `- Color "${l.color}" represents: "${l.label}"`).join("\n")
+        : "";
+
+      const countsSummary =
+        counts && typeof counts === "object"
+          ? Object.entries(counts)
+              .map(([label, count]) => `- ${label}: ${count} day(s)`)
+              .join("\n")
+          : "";
+
+      const sampleEntries =
+        Array.isArray(entries) && entries.length > 0
+          ? entries
+              .slice(0, 10)
+              .map((e: any) => `Date ${e.date}: ${e.label}${e.note ? ` (Note: "${e.note}")` : ""}`)
+              .join("\n")
+          : "No specific notes entered yet.";
+
+      if (!ai) {
+        return res.json({
+          reflection: `Looking over your "${trackerName || "Yearly Tracker"}", every color recorded represents a distinct page of your journey. You've had meaningful consistency, and each step adds to a colorful pattern of growth. 🌸`,
+          pattern: "Steady consistency throughout your active dates.",
+          suggestion: "Continue honoring each day as it unfolds, step by gentle step.",
+        });
+      }
+
+      const prompt = `You are SoulSelf, a gentle, encouraging, non-judgmental, reflective AI companion.
+The user ${userDisplayName} is tracking their days using a custom dynamic color tracker titled "${trackerName || "My Year in Colors"}".
+Tracker Description: "${trackerDescription || "A visual representation of my days."}"
+
+CRITICAL RULE FOR COLOR MEANINGS:
+Do NOT assume colors have standard meanings (e.g. yellow = happy, blue = sad, green = healthy).
+You MUST interpret colors ONLY according to the user's explicit legend definitions below:
+${legendSummary}
+
+Here is the actual historical data of their tracker:
+Legend Counts:
+${countsSummary}
+
+Recent Marked Days and Notes:
+${sampleEntries}
+
+Instructions:
+1. Provide a gentle, encouraging, non-judgmental observation (2-3 sentences).
+2. Point out a thoughtful pattern or rhythm based strictly on the actual data provided.
+3. Offer a gentle, supportive suggestion or invitation.
+4. Tone requirements: Be warm, empathetic, and encouraging. NEVER use harsh words like "failed", "lazy", "inconsistent", or "behind". Instead use gentle phrasing like "a quieter stretch", "returned to your rhythm", "building momentum".
+
+Format your response as valid JSON with keys:
+- "observation": string
+- "pattern": string
+- "suggestion": string`;
+
+      const response = await safeGenerateContent(ai, {
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              observation: { type: Type.STRING },
+              pattern: { type: Type.STRING },
+              suggestion: { type: Type.STRING },
+            },
+            required: ["observation", "pattern", "suggestion"],
+          },
+        },
+      });
+
+      let parsed: any = {};
+      try {
+        parsed = JSON.parse(response.text || "{}");
+      } catch {
+        parsed = {
+          observation: response.text || "Every color in your tracker builds a unique visual picture of your path.",
+          pattern: "A balance of different moments across your calendar.",
+          suggestion: "Take a moment to appreciate how far you've come.",
+        };
+      }
+
+      res.json(parsed);
+    } catch (err: any) {
+      console.error("[Tracker Reflect Error]:", err?.name || err?.message);
+      res.json({
+        observation: "Each day marked in your tracker tells a story of your rhythm and intentions.",
+        pattern: "You are actively creating a visual tapestry of your year.",
+        suggestion: "Keep filling your grid at your own comfortable pace.",
       });
     }
   });

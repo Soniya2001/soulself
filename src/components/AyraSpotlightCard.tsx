@@ -81,10 +81,10 @@ export const AyraSpotlightCard: React.FC<AyraSpotlightCardProps> = ({ onStartAyr
           <button
             id="ayra-spotlight-primary-cta"
             onClick={() => onStartAyra("just-talk")}
-            className="px-6 py-3 rounded-full bg-purple-950 hover:bg-purple-900 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm hover:shadow-md transition-all hover:scale-102 active:scale-98 cursor-pointer"
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm hover:shadow-md transition-all hover:scale-102 active:scale-98 cursor-pointer"
           >
             <span>Talk with AYRA</span>
-            <ArrowRight className="w-3.5 h-3.5 text-pink-300" />
+            <ArrowRight className="w-3.5 h-3.5 text-pink-200" />
           </button>
           <span className="text-[11px] text-purple-900/50 font-serif italic">
             Private & non-clinical

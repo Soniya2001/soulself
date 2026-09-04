@@ -14,7 +14,6 @@ import { audioManager } from "../utils/audio";
 import { UserProfile } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { DataIsolationTestModal } from "./DataIsolationTestModal";
-import { AmbientSoundControl } from "./AmbientSoundControl";
 
 interface NavbarProps {
   currentView: "dashboard" | "writer" | "all-entries" | "globe" | "calendar" | "emotional" | "ayra" | "diary-book";
@@ -34,15 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onUpdateProfile,
 }) => {
   const { user, logout } = useAuth();
-  const [isAmbientOn, setIsAmbientOn] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [tempName, setTempName] = useState(userProfile.name);
-
-  const toggleSound = () => {
-    const nextState = audioManager.toggleAmbient();
-    setIsAmbientOn(nextState);
-  };
 
   const handleSaveName = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +106,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setShowProfileModal(true)}
               className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-white hover:bg-pink-50 border border-pink-200 shadow-2xs transition-colors cursor-pointer"
             >
-              <div className="w-6 h-6 rounded-full bg-purple-900 text-pink-100 flex items-center justify-center text-[10px] font-serif font-bold">
+              <div className="w-6 h-6 rounded-full bg-pink-600 text-white flex items-center justify-center text-[10px] font-serif font-bold">
                 {userProfile.name.charAt(0)}
               </div>
-              <span className="text-xs font-serif italic text-purple-950 max-w-[90px] truncate hidden sm:inline">
+              <span className="text-xs font-serif italic text-pink-950 max-w-[90px] truncate hidden sm:inline">
                 {userProfile.name}
               </span>
             </button>
@@ -131,8 +124,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate("dashboard")}
               className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap px-3.5 py-1.5 rounded-full ${
                 currentView === "dashboard"
-                  ? "bg-purple-950 text-white font-extrabold shadow-2xs"
-                  : "text-purple-900/70 hover:text-purple-950 hover:bg-pink-100/50"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-sm"
+                  : "text-pink-900/70 hover:text-pink-950 hover:bg-pink-100/50"
               }`}
             >
               Home
@@ -143,12 +136,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate("diary-book")}
               className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${
                 currentView === "diary-book"
-                  ? "bg-pink-600 text-white font-extrabold shadow-2xs"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-sm"
                   : "text-pink-700 hover:text-pink-900 bg-pink-50 hover:bg-pink-100 border border-pink-200/80"
               }`}
             >
               <BookHeart className="w-3.5 h-3.5" />
-              <span>Diary Book 📖</span>
+              <span>Diary Book</span>
             </button>
 
             <button
@@ -156,8 +149,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate("all-entries")}
               className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap px-3.5 py-1.5 rounded-full ${
                 currentView === "all-entries"
-                  ? "bg-purple-950 text-white font-extrabold shadow-2xs"
-                  : "text-purple-900/70 hover:text-purple-950 hover:bg-pink-100/50"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-sm"
+                  : "text-pink-900/70 hover:text-pink-950 hover:bg-pink-100/50"
               }`}
             >
               All Journals
@@ -168,8 +161,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate("globe")}
               className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${
                 currentView === "globe"
-                  ? "bg-purple-950 text-white font-extrabold shadow-2xs"
-                  : "text-purple-900/70 hover:text-purple-950 hover:bg-pink-100/50"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-sm"
+                  : "text-pink-900/70 hover:text-pink-950 hover:bg-pink-100/50"
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -181,12 +174,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate("ayra")}
               className={`text-xs uppercase tracking-[0.15em] font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${
                 currentView === "ayra"
-                  ? "bg-purple-950 text-white font-extrabold shadow-2xs"
-                  : "text-purple-700 hover:text-purple-950 bg-pink-100/70 hover:bg-pink-100 border border-pink-200/80 font-bold"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-sm"
+                  : "text-pink-700 hover:text-pink-950 bg-pink-100/70 hover:bg-pink-100 border border-pink-200/80 font-bold"
               }`}
             >
-              <span>💜</span>
-              <span>AYRA</span>
+              <span>AYRA AI</span>
             </button>
           </div>
         </nav>

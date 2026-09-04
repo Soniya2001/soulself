@@ -383,8 +383,8 @@ export const DiaryBookView: React.FC<DiaryBookViewProps> = ({
               title="Click to turn back"
               className="absolute left-3 sm:left-5 top-8 bottom-8 w-8 sm:w-12 z-35 flex items-center justify-start cursor-pointer group/left-margin opacity-0 hover:opacity-100 transition-opacity"
             >
-              <div className="p-1.5 rounded-r-xl bg-purple-950/80 backdrop-blur-xs text-white shadow-md flex items-center gap-1 text-[10px] transform -translate-x-2 group-hover/left-margin:translate-x-0 transition-transform">
-                <ChevronLeft className="w-3.5 h-3.5 text-pink-300" />
+              <div className="p-1.5 rounded-r-xl bg-pink-600/90 backdrop-blur-xs text-white shadow-md flex items-center gap-1 text-[10px] transform -translate-x-2 group-hover/left-margin:translate-x-0 transition-transform">
+                <ChevronLeft className="w-3.5 h-3.5 text-pink-200" />
                 <span className="font-serif hidden sm:inline pr-1">Prev</span>
               </div>
             </div>
@@ -397,9 +397,9 @@ export const DiaryBookView: React.FC<DiaryBookViewProps> = ({
               title="Click to turn next page"
               className="absolute right-3 sm:right-5 top-8 bottom-8 w-8 sm:w-12 z-35 flex items-center justify-end cursor-pointer group/right-margin opacity-0 hover:opacity-100 transition-opacity"
             >
-              <div className="p-1.5 rounded-l-xl bg-purple-950/80 backdrop-blur-xs text-white shadow-md flex items-center gap-1 text-[10px] transform translate-x-2 group-hover/right-margin:translate-x-0 transition-transform">
+              <div className="p-1.5 rounded-l-xl bg-pink-600/90 backdrop-blur-xs text-white shadow-md flex items-center gap-1 text-[10px] transform translate-x-2 group-hover/right-margin:translate-x-0 transition-transform">
                 <span className="font-serif hidden sm:inline pl-1">Next</span>
-                <ChevronRight className="w-3.5 h-3.5 text-pink-300" />
+                <ChevronRight className="w-3.5 h-3.5 text-pink-200" />
               </div>
             </div>
           )}
@@ -436,6 +436,7 @@ export const DiaryBookView: React.FC<DiaryBookViewProps> = ({
             {/* Page 3 onward: Normal Journal Entry */}
             {currentPage >= 3 && sortedEntries[currentPage - 3] && (
               <JournalEntryDiaryPage
+                key={sortedEntries[currentPage - 3].id}
                 entry={sortedEntries[currentPage - 3]}
                 onSave={onSaveJournalEntry}
                 onDelete={onDeleteJournalEntry}

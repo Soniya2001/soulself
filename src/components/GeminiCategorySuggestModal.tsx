@@ -125,7 +125,7 @@ export const GeminiCategorySuggestModal: React.FC<GeminiCategorySuggestModalProp
           <button
             onClick={handleApply}
             disabled={selected.length === 0}
-            className="px-5 py-2 rounded-full bg-purple-950 hover:bg-purple-900 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+            className="px-5 py-2 rounded-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
           >
             Apply ({selected.length})
           </button>

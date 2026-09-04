@@ -154,7 +154,7 @@ export const AmbientSoundControl: React.FC<AmbientSoundControlProps> = ({
             className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer ${
               engineState.isPlaying
                 ? "bg-pink-500 hover:bg-pink-600 text-white"
-                : "bg-purple-950 hover:bg-purple-900 text-white"
+                : "bg-pink-600 hover:bg-pink-700 text-white"
             }`}
           >
             {engineState.isPlaying ? (
@@ -312,7 +312,7 @@ export const AmbientSoundControl: React.FC<AmbientSoundControlProps> = ({
                 className={`px-3.5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0 ${
                   engineState.isPlaying
                     ? "bg-pink-500 hover:bg-pink-600 text-white"
-                    : "bg-purple-950 hover:bg-purple-900 text-white"
+                    : "bg-pink-600 hover:bg-pink-700 text-white"
                 }`}
               >
                 {engineState.isPlaying ? (

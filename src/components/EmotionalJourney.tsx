@@ -258,10 +258,10 @@ export const EmotionalJourney: React.FC<EmotionalJourneyProps> = ({
               {onSelectEntry && (
                 <button
                   onClick={() => onSelectEntry(activePoint.entry)}
-                  className="px-4 py-2 rounded-full bg-purple-950 hover:bg-purple-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-102 cursor-pointer shrink-0 self-start sm:self-auto"
+                  className="px-4 py-2 rounded-full bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-102 cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <span>View Journal</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-pink-300" />
+                  <ArrowRight className="w-3.5 h-3.5 text-pink-200" />
                 </button>
               )}
             </div>

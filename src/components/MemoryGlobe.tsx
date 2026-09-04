@@ -524,7 +524,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
             onClick={() => setSelectedCategory("ALL")}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === "ALL"
-                ? "bg-purple-950 text-white shadow-2xs"
+                ? "bg-pink-600 text-white shadow-2xs"
                 : "bg-pink-50 text-purple-900 hover:bg-pink-100"
             }`}
           >
@@ -536,7 +536,7 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
               onClick={() => setSelectedCategory(cat.name)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
                 selectedCategory === cat.name
-                  ? "bg-purple-950 text-white shadow-2xs"
+                  ? "bg-pink-600 text-white shadow-2xs"
                   : "bg-pink-50/80 text-purple-900 hover:bg-pink-100"
               }`}
             >
@@ -596,16 +596,16 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
 
         {/* Bottom Hover/Selected Location Chip */}
         {currentDisplayLocation && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-purple-950/95 text-white px-5 py-2.5 rounded-full shadow-xl border border-pink-300/40 text-xs font-serif flex items-center gap-2 animate-slide-up">
-            <MapPin className="w-4 h-4 text-pink-400" />
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-pink-600 to-rose-600 text-white px-5 py-2.5 rounded-full shadow-xl border border-pink-300/40 text-xs font-serif flex items-center gap-2 animate-slide-up">
+            <MapPin className="w-4 h-4 text-pink-200" />
             <span className="font-bold">{currentDisplayLocation.name}</span>
-            <span className="text-pink-300">({currentDisplayLocation.entries.length} memories)</span>
+            <span className="text-pink-100">({currentDisplayLocation.entries.length} memories)</span>
           </div>
         )}
 
         {/* Requirement 19: Developer Diagnostic Overlay */}
         {(activeLocation || hoveredLocation) && (
-          <div className="absolute bottom-4 left-4 z-40 bg-purple-950/90 text-white p-3 rounded-2xl text-xs font-mono backdrop-blur-md border border-pink-300/40 shadow-xl space-y-1 hidden md:block">
+          <div className="absolute bottom-4 left-4 z-40 bg-pink-950/90 text-white p-3 rounded-2xl text-xs font-mono backdrop-blur-md border border-pink-300/40 shadow-xl space-y-1 hidden md:block">
             <div className="font-bold text-pink-300 flex items-center gap-1.5 font-serif">
               <MapPin className="w-3.5 h-3.5 text-pink-400" />
               <span>{(activeLocation || hoveredLocation)?.name}</span>

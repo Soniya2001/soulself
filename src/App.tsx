@@ -25,6 +25,7 @@ import {
   JournalLocation,
   AboutMeData,
   BucketListData,
+  TrackerDoc,
 } from "./types";
 import {
   DEFAULT_USER_PROFILE,
@@ -34,7 +35,8 @@ import {
 } from "./data/initialData";
 import { getSavedPreferredLocation, repairJournalLocationCoords } from "./utils/location";
 import { SplashScreen } from "./components/SplashScreen";
-import { Navbar } from "./components/Navbar";
+import { Sidebar, NavViewType } from "./components/Sidebar";
+import { TrackersView } from "./components/Trackers/TrackersView";
 import { DashboardStats } from "./components/DashboardStats";
 import { GeminiReflectionCard } from "./components/GeminiReflectionCard";
 import { JournalCalendar } from "./components/JournalCalendar";
@@ -62,6 +64,9 @@ import {
   saveAboutMeDoc,
   subscribeToBucketList,
   saveBucketListDoc,
+  subscribeToUserTrackers,
+  saveTrackerDoc,
+  deleteTrackerDoc,
 } from "./services/firestoreService";
 import { audioManager } from "./utils/audio";
 import { PetalsCanvas } from "./components/PetalsCanvas";
@@ -71,6 +76,7 @@ function MainAppContent() {
 
   // Firestore Synchronized State
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [trackers, setTrackers] = useState<TrackerDoc[]>([]);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [aboutMeData, setAboutMeData] = useState<AboutMeData>(DEFAULT_ABOUT_ME);
@@ -78,9 +84,8 @@ function MainAppContent() {
 
   // App Navigation & View state
   const [showSplash, setShowSplash] = useState<boolean>(true);
-  const [currentView, setCurrentView] = useState<
-    "dashboard" | "writer" | "all-entries" | "globe" | "calendar" | "emotional" | "ayra" | "diary-book"
-  >("dashboard");
+  const [currentView, setCurrentView] = useState<NavViewType>("dashboard");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isOpeningBook, setIsOpeningBook] = useState<boolean>(false);
   const [openingTargetView, setOpeningTargetView] = useState<"writer" | "diary-book">("writer");
   const [targetDiaryPage, setTargetDiaryPage] = useState<number>(1);
@@ -206,10 +211,39 @@ function MainAppContent() {
       (err) => console.error("Failed to load Bucket List data:", err)
     );
 
+    // 5. Subscribe to User's Yearly Color Trackers
+    const unsubscribeTrackers = subscribeToUserTrackers(
+      user.uid,
+      async (userTrackers) => {
+        if (userTrackers.length === 0) {
+          // Auto seed welcome tracker template for first-time user
+          const defaultTracker: TrackerDoc = {
+            id: `tracker-default-${user.uid}`,
+            userId: user.uid,
+            name: "My Year in Colors",
+            description: "A colorful way to track my days and memories throughout the year.",
+            startDate: new Date().toISOString().split("T")[0],
+            endDate: new Date(new Date().getFullYear() + 1, new Date().getMonth(), new Date().getDate()).toISOString().split("T")[0],
+            legend: [
+              { id: "leg-1", color: "#FDE047", label: "" },
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          await saveTrackerDoc(user.uid, defaultTracker);
+          setTrackers([defaultTracker]);
+        } else {
+          setTrackers(userTrackers);
+        }
+      },
+      (err) => console.error("Failed to load trackers data:", err)
+    );
+
     return () => {
       unsubscribeJournals();
       unsubscribeAboutMe();
       unsubscribeBucketList();
+      unsubscribeTrackers();
     };
   }, [user]);
 
@@ -317,8 +351,18 @@ function MainAppContent() {
   const handleSaveEntry = async (savedEntry: JournalEntry) => {
     if (!user) return;
     const entryToSave = { ...savedEntry, userId: user.uid };
-    await saveJournalEntryDoc(user.uid, entryToSave);
+    setEntries((prev) => {
+      const idx = prev.findIndex((e) => e.id === entryToSave.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = entryToSave;
+        return next;
+      } else {
+        return [entryToSave, ...prev];
+      }
+    });
     setActiveEntry(entryToSave);
+    await saveJournalEntryDoc(user.uid, entryToSave);
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -496,30 +540,67 @@ function MainAppContent() {
     { mood: "Worried", emoji: "🌧️", label: "Worried" },
   ];
 
+  const handleSaveTracker = async (tracker: Partial<TrackerDoc>) => {
+    if (!user) return;
+    const fullTracker: TrackerDoc = {
+      id: tracker.id || `tracker-${Date.now()}`,
+      userId: user.uid,
+      name: tracker.name || "My Year in Colors",
+      description: tracker.description,
+      startDate: tracker.startDate || new Date().toISOString().split("T")[0],
+      endDate: tracker.endDate,
+      legend: tracker.legend || [],
+      createdAt: tracker.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveTrackerDoc(user.uid, fullTracker);
+  };
+
+  const handleDeleteTracker = async (trackerId: string) => {
+    if (!user) return;
+    await deleteTrackerDoc(user.uid, trackerId);
+  };
+
   return (
-    <div id="soulself-dashboard-root" className="min-h-screen bg-[#FCF8FA] flex flex-col">
-      {/* Top Floating Glass Navbar */}
-      <Navbar
+    <div id="soulself-dashboard-root" className="min-h-screen bg-[#FCF8FA] flex flex-col lg:flex-row">
+      {/* Sidebar Navigation */}
+      <Sidebar
         currentView={currentView}
         onNavigate={(view) => setCurrentView(view)}
         onOpenNewJournal={() => handleStartNewJournal()}
         onShowSplash={() => setShowSplash(true)}
         userProfile={userProfile}
         onUpdateProfile={handleUpdateProfile}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
       {/* Main Dashboard Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* View 1: 3D Memory Globe */}
-        {currentView === "globe" && (
-          <div className="animate-fade-in space-y-8">
-            <MemoryGlobe
-              entries={entries}
-              onSelectEntry={handleOpenExistingEntry}
-              onNewEntryWithLocation={(loc) => handleStartNewJournal(undefined, undefined, undefined, loc)}
-            />
-          </div>
-        )}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? "lg:pl-20" : "lg:pl-64"}`}>
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* View: Trackers */}
+          {currentView === "trackers" && (
+            <div className="animate-fade-in">
+              <TrackersView
+                userId={user.uid}
+                userName={userProfile.name}
+                trackers={trackers}
+                onSaveTracker={handleSaveTracker}
+                onDeleteTracker={handleDeleteTracker}
+              />
+            </div>
+          )}
+
+          {/* View 1: 3D Memory Globe */}
+          {currentView === "globe" && (
+            <div className="animate-fade-in space-y-8">
+              <MemoryGlobe
+                entries={entries}
+                onSelectEntry={handleOpenExistingEntry}
+                onNewEntryWithLocation={(loc) => handleStartNewJournal(undefined, undefined, undefined, loc)}
+              />
+            </div>
+          )}
 
         {/* View 3: All Journals Advanced Archive */}
         {currentView === "all-entries" && (
@@ -730,6 +811,7 @@ function MainAppContent() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

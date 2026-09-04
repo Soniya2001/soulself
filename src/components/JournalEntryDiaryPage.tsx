@@ -19,10 +19,14 @@ import {
   AlertTriangle,
   Navigation,
   Loader2,
+  Music,
 } from "lucide-react";
-import { JournalEntry, StickerPlacement, MoodType, JournalMedia, JournalLocation } from "../types";
+import { JournalEntry, StickerPlacement, MoodType, JournalMedia, JournalLocation, JournalMusicTrack } from "../types";
 import { InteractiveSticker } from "./InteractiveSticker";
 import { StickerDrawer } from "./StickerDrawer";
+import { MusicSearchModal } from "./MusicSearchModal";
+import { MusicStickerCard } from "./MusicStickerCard";
+import { JournalPageLayout } from "./JournalPageLayout";
 import { audioManager } from "../utils/audio";
 import { POPULAR_LOCATIONS } from "../data/initialData";
 import {
@@ -69,6 +73,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [isMusicSearchOpen, setIsMusicSearchOpen] = useState(false);
 
   // Requirement 3, 4, 12: Real-time debounced location search autocomplete
   useEffect(() => {
@@ -103,6 +108,27 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
       onSave(next);
     }
     showToast(`Location updated to ${result.displayName} 📍`);
+  };
+
+  // Music handlers
+  const handleSelectMusicTrack = (track: JournalMusicTrack) => {
+    const updated = { ...formData, music: track };
+    setFormData(updated);
+    if (!isEditing) {
+      onSave(updated);
+    }
+    audioManager.playGentleTap();
+    showToast(`Music attached: "${track.title}" 🎵`);
+  };
+
+  const handleRemoveMusic = () => {
+    const updated = { ...formData, music: null };
+    setFormData(updated);
+    if (!isEditing) {
+      onSave(updated);
+    }
+    audioManager.playGentleTap();
+    showToast("Music attachment removed 🌸");
   };
 
   // Undo histories
@@ -369,379 +395,149 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
   };
 
   return (
-    <div
-      ref={pageRef}
-      id={`diary-page-entry-${entry.id}`}
-      className="relative w-full min-h-[660px] sm:min-h-[740px] h-[660px] sm:h-[740px] bg-[#FFFDFB] diary-paper-lined rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-inner flex flex-col justify-between overflow-hidden select-text transition-all"
-    >
-      {/* Decorative Washi Tape Accent */}
-      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-28 h-5 bg-pink-200/70 backdrop-blur-xs opacity-90 rotate-1 rounded-xs pointer-events-none shadow-2xs z-10 border border-pink-300/40" />
-
-      {/* Interactive Placed Stickers */}
-      {(formData.stickers || []).map((st) => (
-        <InteractiveSticker
-          key={st.id}
-          sticker={st}
-          containerRef={pageRef}
-          onUpdate={handleUpdateSticker}
-          onRemove={handleRemoveSticker}
-          readOnly={!isEditing}
-        />
-      ))}
-
-      {/* Floating Undo Toast Bar */}
-      {toastMessage && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-purple-950/95 text-white px-4 py-2 rounded-full shadow-xl border border-pink-300/40 text-xs animate-slide-down">
-          <span>{toastMessage.text}</span>
-          {toastMessage.onUndo && (
-            <button
-              type="button"
-              onClick={() => {
-                toastMessage.onUndo?.();
-                setToastMessage(null);
-              }}
-              className="flex items-center gap-1 font-bold text-pink-300 hover:text-pink-100 underline ml-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Undo</span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setToastMessage(null)}
-            className="text-white/60 hover:text-white ml-1 p-0.5"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-
-      {/* Page Body Content (Scrollable within fixed page boundaries) */}
-      <div className="relative z-20 space-y-4 overflow-y-auto max-h-[500px] sm:max-h-[580px] pr-1.5 custom-scrollbar flex-1">
-        {/* Top Meta Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-200/80 pb-3">
-          {/* Date, Time, Weather, Location */}
-          <div className="flex flex-wrap items-center gap-2.5 text-xs text-purple-900/80 font-serif">
-            <div className="flex items-center gap-1.5 font-bold text-pink-700 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-200/60">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{formData.date || "Today"}</span>
-            </div>
-
-            <div className="flex items-center gap-1 text-purple-900/70">
-              <Clock className="w-3.5 h-3.5 text-purple-400" />
-              <span>{formData.time || "12:00 PM"}</span>
-            </div>
-
-            {formData.weather && (
-              <div className="flex items-center gap-1 text-purple-900/70">
-                <CloudSun className="w-3.5 h-3.5 text-amber-500" />
-                <span>{formData.weather}</span>
-              </div>
-            )}
-
-            {/* Location Badge (Interactive only during Edit mode) */}
-            <div className="relative">
+    <>
+      <JournalPageLayout
+        entry={entry}
+        isEditing={isEditing}
+        pageNumber={pageNumber}
+        title={formData.title || ""}
+        content={formData.content || ""}
+        date={formData.date || ""}
+        time={formData.time || ""}
+        mood={formData.mood || "Happy"}
+        moodEmoji={formData.moodEmoji || "😊"}
+        weather={formData.weather}
+        categories={formData.categories || []}
+        location={formData.location}
+        music={formData.music}
+        media={formData.media || []}
+        stickers={formData.stickers || []}
+        summary={formData.summary}
+        isFavorite={formData.isFavorite}
+        onTitleChange={(t) => setFormData((prev) => ({ ...prev, title: t }))}
+        onContentChange={(c) => setFormData((prev) => ({ ...prev, content: c }))}
+        onDateChange={(d) => setFormData((prev) => ({ ...prev, date: d }))}
+        onTimeChange={(tm) => setFormData((prev) => ({ ...prev, time: tm }))}
+        onMoodChange={(m, emoji) =>
+          setFormData((prev) => ({ ...prev, mood: m, moodEmoji: emoji }))
+        }
+        onWeatherChange={(w) => setFormData((prev) => ({ ...prev, weather: w }))}
+        onLocationClick={() =>
+          isEditing && setIsLocationPopoverOpen(!isLocationPopoverOpen)
+        }
+        onOpenMusicSearch={() => setIsMusicSearchOpen(true)}
+        onRemoveMusic={handleRemoveMusic}
+        onRemovePhoto={(photoId) => handleRemovePhoto(photoId, true)}
+        onPhotoCaptionChange={(photoId, caption) => {
+          const updatedMedia = (formData.media || []).map((m) =>
+            m.id === photoId ? { ...m, caption } : m
+          );
+          setFormData({ ...formData, media: updatedMedia });
+        }}
+        onUpdateSticker={handleUpdateSticker}
+        onRemoveSticker={handleRemoveSticker}
+        toastMessage={toastMessage}
+        onDismissToast={() => setToastMessage(null)}
+        headerActions={
+          isEditing ? (
+            <>
               <button
                 type="button"
-                onClick={() => {
-                  if (isEditing) {
-                    setIsLocationPopoverOpen(!isLocationPopoverOpen);
-                  }
-                }}
-                disabled={!isEditing}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-serif font-medium border transition-colors ${
-                  formData.location?.name
-                    ? "bg-pink-50 text-pink-700 border-pink-200/70"
-                    : "bg-pink-50/50 text-pink-500 border-dashed border-pink-300"
-                } ${isEditing ? "hover:bg-pink-100 cursor-pointer" : "cursor-default"}`}
-                title={isEditing ? "Click to change location" : "Page Location"}
+                onClick={() => setIsStickerDrawerOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                title="Add Stickers to this page"
               >
-                <MapPin className="w-3.5 h-3.5 text-pink-500" />
-                <span>{formData.location?.name ? formData.location.name : "+ Place"}</span>
+                <Smile className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sticker</span>
               </button>
-            </div>
-          </div>
 
-          {/* Action Toolbar */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Sticker & Photo Buttons (Visible ONLY during Edit mode) */}
-            {isEditing && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setIsStickerDrawerOpen(true)}
-                  className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-                  title="Add Stickers to this page"
-                >
-                  <Smile className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sticker</span>
-                </button>
+              <label className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer">
+                <ImageIcon className="w-3.5 h-3.5 text-pink-500" />
+                <span className="hidden sm:inline">+ Photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleAddPhoto(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
 
-                <label className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer">
-                  <ImageIcon className="w-3.5 h-3.5 text-pink-500" />
-                  <span className="hidden sm:inline">+ Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleAddPhoto(e.target.files[0]);
-                      }
-                    }}
-                  />
-                </label>
-
-                {stickerHistory.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleUndoSticker}
-                    className="px-2.5 py-1.5 rounded-full bg-white hover:bg-pink-50 text-purple-900 text-xs font-medium border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-                    title="Undo Sticker Action"
-                  >
-                    <RotateCcw className="w-3 h-3 text-pink-600" />
-                    <span className="hidden sm:inline">Undo</span>
-                  </button>
-                )}
-              </>
-            )}
-
-            {!isEditing ? (
-              <>
-                {/* Single Clean Edit Button */}
-                <button
-                  type="button"
-                  id={`edit-journal-page-${pageNumber}-btn`}
-                  onClick={handleStartEdit}
-                  className="px-4 py-1.5 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-pink-300" />
-                  <span>Edit ✎</span>
-                </button>
-
-                {/* SINGLE Delete Page Button */}
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-                    title={`Delete Page ${pageNumber}`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Delete 🗑️</span>
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Cancel</span>
-                </button>
-                <button
-                  type="button"
-                  id={`save-journal-page-${pageNumber}-btn`}
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-4 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{isSaving ? "Saving..." : "Save Entry 🌸"}</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mood & Category Tags */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {!isEditing ? (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-900 text-xs font-serif font-semibold border border-purple-100 shadow-2xs">
-                <span>{formData.moodEmoji || "🌸"}</span>
-                <span>Feeling {formData.mood}</span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-bold text-pink-700 font-serif">Mood:</span>
-                {MOOD_OPTIONS.map((m) => (
-                  <button
-                    key={m.mood}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, mood: m.mood, moodEmoji: m.emoji })}
-                    className={`px-2 py-0.5 rounded-full text-xs font-serif transition-all cursor-pointer ${
-                      formData.mood === m.mood
-                        ? "bg-pink-600 text-white font-bold scale-105"
-                        : "bg-pink-50 text-purple-900 hover:bg-pink-100"
-                    }`}
-                  >
-                    <span>{m.emoji}</span> {m.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Categories */}
-            {(formData.categories || []).map((cat) => (
-              <span
-                key={cat}
-                className="px-2.5 py-0.5 rounded-full bg-white/90 border border-pink-200 text-purple-900 text-[11px] font-sans-ui font-medium"
+              <button
+                type="button"
+                onClick={() => setIsMusicSearchOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-semibold border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                title="Attach music to this page"
               >
-                #{cat}
-              </span>
-            ))}
-          </div>
+                <Music className="w-3.5 h-3.5 text-pink-500" />
+                <span className="hidden sm:inline">
+                  {formData.music ? "Change Music" : "+ Music"}
+                </span>
+              </button>
 
-          {formData.isFavorite && (
-            <div className="flex items-center gap-1 text-xs text-rose-500 font-serif font-medium bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-100">
-              <Heart className="w-3 h-3 fill-rose-400" />
-              <span>Favorited Memory</span>
-            </div>
-          )}
-        </div>
-
-        {/* Title (Pixel-identical styling between View & Edit mode to eliminate sticker shift) */}
-        {!isEditing ? (
-          <h2 className="font-serif-title text-2xl sm:text-3xl font-bold text-purple-950 tracking-tight leading-snug">
-            {formData.title || "Untitled Journal"}
-          </h2>
-        ) : (
-          <input
-            type="text"
-            value={formData.title || ""}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Title of this page..."
-            className="w-full text-2xl sm:text-3xl font-serif-title font-bold text-purple-950 bg-pink-50/40 border-b border-pink-300 px-1 py-0.5 focus:outline-none focus:border-pink-500"
-          />
-        )}
-
-        {/* Attached Photos / Polaroid Media Cards */}
-        {formData.media && formData.media.length > 0 && (
-          <div className="py-1">
-            <div className="flex flex-wrap gap-4 py-2">
-              {formData.media.map((med) => (
-                <div
-                  key={med.id}
-                  className="relative group bg-white p-2.5 pb-4 rounded-xl shadow-md border border-pink-100 max-w-[260px] rotate-[-1deg] hover:rotate-0 transition-transform"
+              {stickerHistory.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleUndoSticker}
+                  className="px-2.5 py-1.5 rounded-full bg-white hover:bg-pink-50 text-purple-900 text-xs font-medium border border-pink-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Undo Sticker Action"
                 >
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-3 bg-pink-200/80 rounded-xs pointer-events-none" />
-                  
-                  {isEditing && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePhoto(med.id)}
-                      title="Delete photo from page"
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md border border-white cursor-pointer opacity-90 group-hover:opacity-100 transition-opacity z-10"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-
-                  <img
-                    src={med.url}
-                    alt={med.caption || "Journal photo"}
-                    className="w-full h-36 object-cover rounded-lg mb-2"
-                    referrerPolicy="no-referrer"
-                  />
-                  
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={med.caption || ""}
-                      onChange={(e) => {
-                        const updatedMedia = (formData.media || []).map((m) =>
-                          m.id === med.id ? { ...m, caption: e.target.value } : m
-                        );
-                        setFormData({ ...formData, media: updatedMedia });
-                      }}
-                      placeholder="Add caption..."
-                      className="w-full text-[11px] font-handwriting text-purple-950 text-center bg-pink-50/50 rounded-md px-1 py-0.5 border border-pink-200 focus:outline-none"
-                    />
-                  ) : med.caption ? (
-                    <p className="text-[11px] font-handwriting text-purple-950 italic text-center">
-                      {med.caption}
-                    </p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Journal Content (Pixel-identical typography & line-height in Edit mode as View mode) */}
-        {!isEditing ? (
-          <div className="font-handwriting text-purple-950 text-base sm:text-lg md:text-xl leading-loose sm:leading-[2.2rem] whitespace-pre-line tracking-wide pt-1">
-            {formData.content || (
-              <span className="text-purple-300 italic font-sans text-sm">
-                No entry written on this page yet.
-              </span>
-            )}
-          </div>
-        ) : (
-          <textarea
-            value={formData.content || ""}
-            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-            placeholder="Pour your heart onto the page..."
-            rows={10}
-            className="w-full font-handwriting text-purple-950 text-base sm:text-lg md:text-xl leading-loose sm:leading-[2.2rem] tracking-wide pt-1 bg-transparent border-0 focus:outline-none resize-none focus:ring-0"
-          />
-        )}
-
-        {/* Gemini AI Structured Reflection Insight (if available) */}
-        {formData.summary && !isEditing && (
-          <div className="bg-purple-50/70 rounded-2xl p-4 border border-purple-100 shadow-2xs mt-4 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-purple-900 font-serif">
-              <Sparkles className="w-3.5 h-3.5 text-pink-500" />
-              <span>Gemini Reflection Summary</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-purple-950 font-serif">
-              {formData.summary.mainThemes && formData.summary.mainThemes.length > 0 && (
-                <div>
-                  <span className="font-bold text-pink-700 block mb-0.5">Themes:</span>
-                  <p className="text-purple-900/80">{formData.summary.mainThemes.join(" • ")}</p>
-                </div>
+                  <RotateCcw className="w-3 h-3 text-pink-600" />
+                  <span className="hidden sm:inline">Undo</span>
+                </button>
               )}
-              {formData.summary.whatWentWell && formData.summary.whatWentWell.length > 0 && (
-                <div>
-                  <span className="font-bold text-pink-700 block mb-0.5">What Went Well:</span>
-                  <p className="text-purple-900/80">{formData.summary.whatWentWell.join(" ")}</p>
-                </div>
+
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Cancel</span>
+              </button>
+
+              <button
+                type="button"
+                id={`save-journal-page-${pageNumber}-btn`}
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{isSaving ? "Saving..." : "Save Entry 🌸"}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                id={`edit-journal-page-${pageNumber}-btn`}
+                onClick={handleStartEdit}
+                className="px-4 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-pink-300" />
+                <span>Edit ✎</span>
+              </button>
+
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                  title={`Delete Page ${pageNumber}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Delete 🗑️</span>
+                </button>
               )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Diary Page Footer & Subtle Page Number */}
-      <div className="relative z-20 pt-6 mt-6 border-t border-pink-100/80 flex items-center justify-between text-xs text-purple-900/60 font-serif">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-pink-600/80 italic">
-            <BookOpen className="w-3.5 h-3.5 text-pink-500" />
-            <span>SoulSelf Sanctuary • Page {pageNumber}</span>
-          </div>
-
-          {onDelete && !isEditing && (
-            <button
-              type="button"
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="text-[11px] text-rose-500/80 hover:text-rose-700 flex items-center gap-1 hover:underline cursor-pointer"
-            >
-              <Trash2 className="w-3 h-3" />
-              <span>Delete Page</span>
-            </button>
-          )}
-        </div>
-
-        {/* Deterministic Page Number in Corner */}
-        <div className="font-serif-title text-base sm:text-lg font-bold text-purple-900/70 tracking-widest px-3 py-1 rounded-full bg-pink-50/80 border border-pink-100">
-          {pageNumber}
-        </div>
-      </div>
+            </>
+          )
+        }
+      />
 
       {/* Sticker Drawer */}
       <StickerDrawer
@@ -795,7 +591,7 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
       )}
       {/* High Z-Index Location Selector Modal at Top Level */}
       {isLocationPopoverOpen && (
-        <div className="fixed inset-0 z-[99999] bg-purple-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in text-purple-950">
+        <div className="fixed inset-0 z-[99999] bg-pink-950/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in text-purple-950">
           <div
             className="relative w-full max-w-md bg-white opacity-100 rounded-3xl p-6 shadow-2xl border-2 border-pink-300 z-[100000]"
             onClick={(e) => e.stopPropagation()}
@@ -935,6 +731,14 @@ export const JournalEntryDiaryPage: React.FC<JournalEntryDiaryPageProps> = ({
           </div>
         </div>
       )}
-    </div>
+
+      {/* Music Search Modal */}
+      <MusicSearchModal
+        isOpen={isMusicSearchOpen}
+        onClose={() => setIsMusicSearchOpen(false)}
+        onSelectTrack={handleSelectMusicTrack}
+        currentTrack={formData.music}
+      />
+    </>
   );
 };

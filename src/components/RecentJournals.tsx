@@ -93,9 +93,9 @@ export const RecentJournals: React.FC<RecentJournalsProps> = ({
           </p>
           <button
             onClick={onNewJournalClick}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer transition-all hover:scale-105"
           >
-            <Plus className="w-3.5 h-3.5 text-pink-300" />
+            <Plus className="w-3.5 h-3.5 text-pink-100" />
             <span>Write Entry</span>
           </button>
         </div>

@@ -174,7 +174,7 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
             <button
               onClick={() => setLayoutMode("grid")}
               className={`p-1.5 rounded-full transition-colors ${
-                layoutMode === "grid" ? "bg-purple-950 text-white" : "text-purple-700 hover:bg-pink-50"
+                layoutMode === "grid" ? "bg-pink-600 text-white font-bold" : "text-pink-700 hover:bg-pink-50"
               }`}
               title="Grid View"
             >
@@ -183,7 +183,7 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
             <button
               onClick={() => setLayoutMode("list")}
               className={`p-1.5 rounded-full transition-colors ${
-                layoutMode === "list" ? "bg-purple-950 text-white" : "text-purple-700 hover:bg-pink-50"
+                layoutMode === "list" ? "bg-pink-600 text-white font-bold" : "text-pink-700 hover:bg-pink-50"
               }`}
               title="Diary List View"
             >
@@ -194,9 +194,9 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
           {/* New Entry Button */}
           <button
             onClick={onNewEntry}
-            className="px-4 py-2 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-pink-300" />
+            <Plus className="w-3.5 h-3.5 text-white" />
             <span>Write New</span>
           </button>
         </div>
@@ -244,7 +244,7 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
             onClick={() => setSelectedCategory("ALL")}
             className={`px-3 py-1 rounded-full text-xs font-serif font-semibold shrink-0 transition-all cursor-pointer ${
               selectedCategory === "ALL"
-                ? "bg-purple-950 text-white shadow-2xs"
+                ? "bg-pink-600 text-white font-bold shadow-2xs"
                 : "bg-pink-50/60 text-purple-900 hover:bg-pink-100 border border-pink-100"
             }`}
           >
@@ -256,7 +256,7 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
               onClick={() => setSelectedCategory(catName)}
               className={`px-3 py-1 rounded-full text-xs font-serif font-semibold shrink-0 transition-all cursor-pointer ${
                 selectedCategory === catName
-                  ? "bg-purple-950 text-white shadow-2xs"
+                  ? "bg-pink-600 text-white font-bold shadow-2xs"
                   : "bg-pink-50/60 text-purple-900 hover:bg-pink-100 border border-pink-100"
               }`}
             >
@@ -354,9 +354,9 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
           </p>
           <button
             onClick={resetFilters}
-            className="px-6 py-2.5 rounded-full bg-purple-950 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
+            className="px-6 py-2.5 rounded-full bg-pink-600 text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
           >
-            Reset Filters
+            Upload Photo Memory
           </button>
         </div>
       ) : layoutMode === "grid" ? (
@@ -501,7 +501,7 @@ export const AllJournalsView: React.FC<AllJournalsViewProps> = ({
                     ))}
                   </div>
                 )}
-                <div className="w-8 h-8 rounded-full bg-pink-50 group-hover:bg-purple-950 group-hover:text-white text-purple-700 flex items-center justify-center transition-colors">
+                <div className="w-8 h-8 rounded-full bg-pink-50 group-hover:bg-pink-600 group-hover:text-white text-pink-700 flex items-center justify-center transition-colors">
                   <ChevronRight className="w-4 h-4" />
                 </div>
               </div>

@@ -615,7 +615,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
                 title={mode.description}
                 className={`px-3 py-1.5 rounded-full text-xs font-serif font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
-                    ? "bg-purple-950 text-white shadow-xs scale-102"
+                    ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white shadow-xs scale-102"
                     : "bg-white/80 hover:bg-pink-100/60 text-purple-900/80 border border-pink-200/50"
                 }`}
               >
@@ -647,7 +647,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
             </a>
             <a
               href="tel:112"
-              className="px-3 py-1 bg-purple-900 hover:bg-purple-950 text-white rounded-full font-bold flex items-center gap-1 shadow-xs transition-colors"
+              className="px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white rounded-full font-bold flex items-center gap-1 shadow-xs transition-colors"
             >
               <AlertCircle className="w-3 h-3" />
               <span>Emergency 112</span>
@@ -678,7 +678,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
                     💜
                   </div>
                 ) : (
-                  <div className="w-8 h-8 rounded-2xl bg-purple-900 text-pink-100 flex items-center justify-center text-xs font-serif font-bold shadow-xs shrink-0 mt-1">
+                  <div className="w-8 h-8 rounded-2xl bg-pink-600 text-white flex items-center justify-center text-xs font-serif font-bold shadow-xs shrink-0 mt-1">
                     {userName.charAt(0) || "U"}
                   </div>
                 )}
@@ -687,7 +687,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
                 <div
                   className={`rounded-3xl p-4 sm:p-5 shadow-sm text-sm sm:text-base leading-relaxed ${
                     isUser
-                      ? "bg-purple-950 text-white rounded-tr-xs"
+                      ? "bg-pink-600 text-white rounded-tr-xs"
                       : message.isSafetyResponse
                       ? "bg-gradient-to-br from-[#FFF5F8] via-white to-purple-50/80 border border-pink-300 text-purple-950 rounded-tl-xs ring-1 ring-pink-200"
                       : "bg-white/95 border border-pink-200/80 text-purple-950 rounded-tl-xs"
@@ -743,7 +743,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
 
                         <a
                           href={`tel:${message.crisisResource.emergencyNumber}`}
-                          className="px-3.5 py-2 rounded-xl bg-purple-900 hover:bg-purple-950 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl bg-pink-700 hover:bg-pink-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                         >
                           <AlertCircle className="w-3.5 h-3.5" />
                           <span>Emergency ({message.crisisResource.emergencyNumber})</span>
@@ -856,8 +856,8 @@ export const AyraChat: React.FC<AyraChatProps> = ({
               aria-label="Send message to AYRA"
               className={`p-2.5 sm:px-4 sm:py-2.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0 ${
                 inputText.trim() && !isSending
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white hover:scale-102 active:scale-98"
-                  : "bg-purple-100 text-purple-400 cursor-not-allowed opacity-60"
+                  ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white hover:scale-102 active:scale-98"
+                  : "bg-pink-100 text-pink-400 cursor-not-allowed opacity-60"
               }`}
             >
               <Send className="w-3.5 h-3.5" />
@@ -882,7 +882,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
 
       {/* 6. Saved Conversations History Drawer */}
       {showHistoryDrawer && (
-        <div className="absolute inset-0 bg-purple-950/20 backdrop-blur-xs z-30 flex justify-end animate-in fade-in duration-150">
+        <div className="absolute inset-0 bg-pink-950/20 backdrop-blur-xs z-30 flex justify-end animate-in fade-in duration-150">
           <div className="w-full max-w-sm bg-white h-full shadow-2xl p-5 flex flex-col border-l border-pink-200 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-pink-100 mb-3">
               <div className="flex items-center gap-2">
@@ -913,7 +913,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
 
             <button
               onClick={() => handleStartNewChat()}
-              className="w-full py-2.5 mb-3 rounded-2xl bg-purple-950 hover:bg-purple-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-colors"
+              className="w-full py-2.5 mb-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Start New Conversation</span>
@@ -971,7 +971,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
 
       {/* 7. Save as Journal Modal / Reflection Review */}
       {showSaveJournalModal && (
-        <div className="absolute inset-0 bg-purple-950/30 backdrop-blur-xs z-40 flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="absolute inset-0 bg-pink-950/30 backdrop-blur-xs z-40 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-pink-200 max-h-[90vh] overflow-y-auto flex flex-col space-y-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-pink-100">
               <div className="flex items-center gap-2">
@@ -1113,7 +1113,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
                 <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
                   <button
                     onClick={handleConfirmSaveToJournal}
-                    className="flex-1 py-2.5 rounded-full bg-purple-950 hover:bg-purple-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                    className="flex-1 py-2.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Save to Private Journal</span>

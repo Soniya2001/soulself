@@ -270,7 +270,7 @@ export const AboutMeDiaryPage: React.FC<AboutMeDiaryPageProps> = ({
 
       {/* Floating Undo Toast Bar */}
       {toastMessage && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-purple-950/95 text-white px-4 py-2 rounded-full shadow-xl border border-pink-300/40 text-xs animate-slide-down">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-pink-900/95 text-white px-4 py-2 rounded-full shadow-xl border border-pink-300/40 text-xs animate-slide-down">
           <span>{toastMessage.text}</span>
           {toastMessage.onUndo && (
             <button
@@ -353,9 +353,9 @@ export const AboutMeDiaryPage: React.FC<AboutMeDiaryPageProps> = ({
                 type="button"
                 id="edit-about-me-btn"
                 onClick={handleStartEdit}
-                className="px-4 py-1.5 rounded-full bg-purple-950 hover:bg-purple-900 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Edit3 className="w-3.5 h-3.5 text-pink-300" />
+                <Edit3 className="w-3.5 h-3.5 text-pink-200" />
                 <span>Edit ✎</span>
               </button>
             ) : (

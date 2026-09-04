@@ -46,11 +46,11 @@ export const GeminiReflectionCard: React.FC<GeminiReflectionCardProps> = ({
   return (
     <div
       id="gemini-reflection-card"
-      className="bg-gradient-to-br from-purple-950 via-purple-900 to-purple-800 text-white p-7 sm:p-8 rounded-[36px] shadow-2xl relative overflow-hidden mb-8 group"
+      className="bg-gradient-to-br from-pink-600 via-pink-700 to-rose-700 text-white p-7 sm:p-8 rounded-[36px] shadow-2xl relative overflow-hidden mb-8 group"
     >
       {/* Subtle glowing ambient accents */}
-      <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-pink-500/15 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-indigo-400/10 blur-3xl pointer-events-none" />
+      <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-rose-400/20 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-pink-300/20 blur-3xl pointer-events-none" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between mb-5">
