@@ -392,4 +392,68 @@ export async function generateAyraJournalDraft(params: {
   }
 }
 
+/**
+ * Generate Structured Reflection (Weekly, Monthly, Yearly) via Gemini
+ */
+export async function generateStructuredPeriodReflection(params: {
+  periodType: "weekly" | "monthly" | "yearly";
+  periodKey: string;
+  periodTitle: string;
+  journalContext: any;
+  userName?: string;
+}): Promise<{ reflection: any }> {
+  try {
+    const data = await authorizedFetch("/api/gemini/reflection/period", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+    return data;
+  } catch (err: any) {
+    console.error("Structured period reflection error:", err);
+    throw new Error(err.message || "Unable to generate reflection. Please try again.");
+  }
+}
+
+/**
+ * Send message to Contextual Diary Reflection Agent ("Think with me")
+ */
+export async function sendDiaryReflectionMessage(params: {
+  entryContext: any;
+  messages: { id: string; role: "user" | "agent"; content: string }[];
+  userName?: string;
+}): Promise<{ reply: string }> {
+  try {
+    const data = await authorizedFetch("/api/gemini/reflection/diary", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+    return data;
+  } catch (err: any) {
+    console.error("Diary reflection error:", err);
+    throw new Error(err.message || "Unable to connect with Diary Reflection Agent.");
+  }
+}
+
+/**
+ * Send message to Contextual Globe Reflection Agent ("Remember with me about this place")
+ */
+export async function sendGlobeReflectionMessage(params: {
+  locationName: string;
+  matchedJournals: any[];
+  messages: { id: string; role: "user" | "agent"; content: string }[];
+  userName?: string;
+}): Promise<{ reply: string }> {
+  try {
+    const data = await authorizedFetch("/api/gemini/reflection/globe", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+    return data;
+  } catch (err: any) {
+    console.error("Globe reflection error:", err);
+    throw new Error(err.message || "Unable to connect with Globe Reflection Agent.");
+  }
+}
+
+
 

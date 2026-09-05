@@ -1372,6 +1372,205 @@ Create a structured JSON with:
     }
   });
 
+  // 9. Periodic Structured Reflection (Weekly, Monthly, Yearly)
+  app.post("/api/gemini/reflection/period", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { periodType, periodKey, periodTitle, journalContext, userName } = req.body;
+      const ai = await getGenAI();
+
+      const userDisplayName = userName || user.name || "Friend";
+
+      if (!ai) {
+        return res.json({
+          reflection: {
+            summary: `During ${periodTitle || periodKey}, you spent time documenting your inner thoughts and moments.`,
+            emotionalSummary: "Your entries reflect a steady, mindful presence.",
+            meaningfulMoments: ["Taking quiet moments to express your reflections."],
+            brightSpots: ["Honoring your feelings with self-compassion."],
+            challenges: ["Navigating busy days with self-care."],
+            themes: ["Self-awareness", "Personal Growth"],
+            changes: ["Growing more comfortable holding space for your feelings."],
+            explorationPrompts: ["What intention would bring you the most peace next?"],
+            nextQuestion: "How do you want to show up for yourself in the coming period?",
+          },
+        });
+      }
+
+      const prompt = `You are SoulSelf's Structured Reflection Agent. Analyze the following ${periodType} journal data for ${userDisplayName} for ${periodTitle || periodKey}.
+
+Journal Data & Statistics:
+"""
+${JSON.stringify(journalContext, null, 2)}
+"""
+
+Guidelines:
+- Ground all insights in the actual journal entries provided. Do NOT fabricate events, moods, or numbers.
+- Maintain a warm, encouraging, non-judgmental, serene diary tone.
+- Do NOT diagnose, label mental illnesses, or make clinical claims.
+
+Return a JSON object conforming strictly to this schema:
+{
+  "summary": "Concise 2-3 sentence overview of this ${periodType}.",
+  "emotionalSummary": "2-3 sentence reflection on the emotional rhythm and mood flow.",
+  "meaningfulMoments": ["2-4 specific key moments or reflections mentioned in the entries"],
+  "brightSpots": ["2-3 positive themes, uplifting insights, or small wins"],
+  "challenges": ["1-3 challenges or feelings being processed"],
+  "themes": ["2-4 overarching themes"],
+  "changes": ["1-2 subtle shifts or growth patterns noticed"],
+  "explorationPrompts": ["1-2 gentle prompts for self-discovery"],
+  "nextQuestion": "One thoughtful, open question for the next ${periodType}."
+}`;
+
+      const response = await safeGenerateContent(ai, {
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              summary: { type: Type.STRING },
+              emotionalSummary: { type: Type.STRING },
+              meaningfulMoments: { type: Type.ARRAY, items: { type: Type.STRING } },
+              brightSpots: { type: Type.ARRAY, items: { type: Type.STRING } },
+              challenges: { type: Type.ARRAY, items: { type: Type.STRING } },
+              themes: { type: Type.ARRAY, items: { type: Type.STRING } },
+              changes: { type: Type.ARRAY, items: { type: Type.STRING } },
+              explorationPrompts: { type: Type.ARRAY, items: { type: Type.STRING } },
+              nextQuestion: { type: Type.STRING },
+            },
+            required: ["summary", "emotionalSummary", "meaningfulMoments", "brightSpots", "challenges", "themes", "nextQuestion"],
+          },
+        },
+      });
+
+      const parsed = JSON.parse(response.text || "{}");
+      res.json({ reflection: parsed });
+    } catch (err: any) {
+      console.error("[Period Reflection Error]:", err?.name || "Server error");
+      res.json({
+        reflection: {
+          summary: "A meaningful period of personal reflection.",
+          emotionalSummary: "Your emotional journey showed grounded awareness.",
+          meaningfulMoments: ["Taking quiet moments to express your reflections."],
+          brightSpots: ["Honoring your feelings with self-compassion."],
+          challenges: ["Allowing space to process daily experiences."],
+          themes: ["Self-awareness", "Personal Growth"],
+          changes: ["Nurturing a habit of mindful expression."],
+          explorationPrompts: ["What intention would bring you peace next?"],
+          nextQuestion: "How do you want to show up for yourself in the coming period?",
+        },
+      });
+    }
+  });
+
+  // 10. Diary Contextual Reflection Agent ("Think with me")
+  app.post("/api/gemini/reflection/diary", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { entryContext, messages, userName } = req.body;
+      const ai = await getGenAI();
+
+      const userDisplayName = userName || user.name || "Friend";
+
+      if (!ai) {
+        return res.json({
+          reply: `I'm reading your journal entry "${entryContext.title || "Untitled"}" 📖. It sounds like you're processing some thoughtful feelings. What aspect would you like to explore deeper?`,
+        });
+      }
+
+      const formattedMessages = (messages || []).map((m: any) => `${m.role === "user" ? userDisplayName : "Diary Reflection Agent"}: ${m.content}`).join("\n\n");
+
+      const prompt = `You are SoulSelf's Diary Reflection Agent ("Think with me"). You help ${userDisplayName} explore, brainstorm, and think deeply about their CURRENT journal entry.
+
+CURRENT JOURNAL ENTRY CONTEXT ONLY:
+Title: "${entryContext.title || "Untitled"}"
+Date: ${entryContext.date || "Unknown"}
+Mood: ${entryContext.mood || "Calm"}
+Categories: ${(entryContext.categories || []).join(", ")}
+Location: ${entryContext.location || "None"}
+Body:
+"""
+${entryContext.content || "Empty content"}
+"""
+
+Conversation History:
+"""
+${formattedMessages}
+"""
+
+Guidelines:
+- GROUND EVERYTHING IN THIS SPECIFIC JOURNAL ENTRY. Do NOT refer to unrelated entries.
+- Help the user think, explore feelings, brainstorm ideas, or find themes.
+- Use observational, non-judgmental language ("It sounds like...", "One possibility is...", "Your entry touches on...").
+- Never diagnose, claim psychological certainty, or make clinical judgments.
+- Be warm, quiet, encouraging, and supportive.`;
+
+      const response = await safeGenerateContent(ai, {
+        contents: prompt,
+        config: { temperature: 0.7 },
+      });
+
+      res.json({ reply: response.text || "I'm holding space for this journal entry with you. What feelings arise when you re-read these words?" });
+    } catch (err: any) {
+      console.error("[Diary Reflection Error]:", err?.name || "Server error");
+      res.json({ reply: "I'm holding space for your journal entry. What thoughts or feelings feel most present right now?" });
+    }
+  });
+
+  // 11. Memory Globe Contextual Reflection Agent ("Remember with me about this place")
+  app.post("/api/gemini/reflection/globe", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { locationName, matchedJournals, messages, userName } = req.body;
+      const ai = await getGenAI();
+
+      const userDisplayName = userName || user.name || "Friend";
+
+      if (!ai) {
+        return res.json({
+          reply: `Reflecting on your memories from ${locationName} 📍. You have ${matchedJournals?.length || 0} journal entries recorded here. What memories stand out to you most?`,
+        });
+      }
+
+      const journalsText = (matchedJournals || [])
+        .map((e: any) => `[${e.date}] "${e.title || "Untitled"}" (${e.mood}): ${e.contentExcerpt || ""}`)
+        .join("\n\n")
+        .slice(0, 4000);
+
+      const formattedMessages = (messages || []).map((m: any) => `${m.role === "user" ? userDisplayName : "Globe Reflection Agent"}: ${m.content}`).join("\n\n");
+
+      const prompt = `You are SoulSelf's Globe Reflection Agent ("Remember with me about this place"). You help ${userDisplayName} reflect on their memories from a specific geographic location.
+
+LOCATION: ${locationName}
+MATCHED JOURNALS FROM THIS PLACE ONLY:
+"""
+${journalsText}
+"""
+
+Conversation History:
+"""
+${formattedMessages}
+"""
+
+Guidelines:
+- Ground insights strictly in the memories recorded for ${locationName}.
+- Highlight themes, emotions, and how their experience of this place unfolded over time.
+- Use warm, atmospheric, nostalgic, reflective language.
+- Never diagnose or make clinical claims.`;
+
+      const response = await safeGenerateContent(ai, {
+        contents: prompt,
+        config: { temperature: 0.7 },
+      });
+
+      res.json({ reply: response.text || `Looking across your memories in ${locationName}, a quiet story of experiences unfolds. What stays with you most from this place?` });
+    } catch (err: any) {
+      console.error("[Globe Reflection Error]:", err?.name || "Server error");
+      res.json({ reply: `Looking across your memories in ${locationName}, a quiet story of experiences unfolds. What stays with you most from this place?` });
+    }
+  });
+
   // Vite middleware for development vs static dist for production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

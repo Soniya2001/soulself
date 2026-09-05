@@ -53,6 +53,8 @@ import { AllJournalsView } from "./components/AllJournalsView";
 import { AyraChat } from "./components/AyraChat";
 import { AyraSpotlightCard } from "./components/AyraSpotlightCard";
 import { AyraFloatingButton } from "./components/AyraFloatingButton";
+import { ReflectionCornerView } from "./components/ReflectionCorner/ReflectionCornerView";
+import { HomeReflectionPopup } from "./components/HomeReflectionPopup";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import {
   subscribeToUserJournals,
@@ -86,6 +88,7 @@ function MainAppContent() {
   // App Navigation & View state
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<NavViewType>("dashboard");
+  const [reflectionCornerTab, setReflectionCornerTab] = useState<"weekly" | "monthly" | "yearly">("weekly");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isOpeningBook, setIsOpeningBook] = useState<boolean>(false);
   const [openingTargetView, setOpeningTargetView] = useState<"writer" | "diary-book">("writer");
@@ -656,9 +659,30 @@ function MainAppContent() {
           </div>
         )}
 
-        {/* View 7: Default Editorial Dashboard */}
+        {/* View 7: ✨ REFLECTION CORNER */}
+        {currentView === "reflection-corner" && (
+          <div className="animate-fade-in">
+            <ReflectionCornerView
+              entries={entries}
+              userName={userProfile.name}
+              onOpenJournal={handleOpenExistingEntry}
+              initialTab={reflectionCornerTab}
+            />
+          </div>
+        )}
+
+        {/* View 8: Default Editorial Dashboard */}
         {currentView === "dashboard" && (
           <div className="animate-fade-in space-y-8">
+            {/* One-Time Periodic Reflection Popup Notification */}
+            <HomeReflectionPopup
+              entries={entries}
+              onOpenReflectionCorner={(tab) => {
+                setReflectionCornerTab(tab);
+                setCurrentView("reflection-corner");
+              }}
+            />
+
             {/* Full-Width Dashboard Content */}
             <div className="flex flex-col gap-8 mb-6">
               {/* Hero Greeting & Editorial Action Button */}

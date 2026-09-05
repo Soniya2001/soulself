@@ -16,6 +16,7 @@ import {
 import { JournalEntry, JournalLocation } from "../types";
 import { DEFAULT_CATEGORIES } from "../data/initialData";
 import { MemoryCarousel, LocationGroup } from "./MemoryCarousel";
+import { GlobeReflectionModal } from "./GlobeReflectionModal";
 import {
   latitudeLongitudeToGlobePosition,
   runGeographicCoordinateUnitTests,
@@ -24,15 +25,18 @@ import {
 
 interface MemoryGlobeProps {
   entries: JournalEntry[];
+  userName?: string;
   onSelectEntry: (entry: JournalEntry) => void;
   onNewEntryWithLocation: (location: JournalLocation) => void;
 }
 
 export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
   entries,
+  userName = "Friend",
   onSelectEntry,
   onNewEntryWithLocation,
 }) => {
+  const [showGlobeReflection, setShowGlobeReflection] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -626,7 +630,18 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
         entries={activeLocation ? activeLocation.entries : []}
         onSelectEntry={onSelectEntry}
         onNewEntryWithLocation={onNewEntryWithLocation}
+        onReflectOnPlace={() => setShowGlobeReflection(true)}
       />
+
+      {/* Globe Contextual Reflection Modal */}
+      {showGlobeReflection && activeLocation && (
+        <GlobeReflectionModal
+          locationName={activeLocation.name}
+          matchedEntries={activeLocation.entries}
+          userName={userName}
+          onClose={() => setShowGlobeReflection(false)}
+        />
+      )}
     </div>
   );
 };

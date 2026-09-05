@@ -11,6 +11,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { sanitizeFirestoreData } from "../utils/firestoreSanitizer";
 import {
   JournalEntry,
   UserProfile,
@@ -19,6 +20,11 @@ import {
   AyraConversation,
   TrackerDoc,
   TrackerEntryDoc,
+  PeriodReflectionDoc,
+  PeriodType,
+  UserNotificationDoc,
+  DiaryReflectionDoc,
+  GlobeReflectionDoc,
 } from "../types";
 
 /**
@@ -327,17 +333,25 @@ export async function saveAyraConversationDoc(
   conversation: AyraConversation
 ): Promise<void> {
   if (!userId) throw new Error("Authentication required to save AYRA conversation.");
+  if (!conversation || !conversation.id) throw new Error("Conversation ID is required.");
+
   const convoRef = doc(db, "users", userId, "ayraConversations", conversation.id);
 
-  await setDoc(
-    convoRef,
-    {
-      ...conversation,
-      userId,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true }
-  );
+  const payload = {
+    id: conversation.id,
+    userId,
+    title: conversation.title || "Talk with AYRA",
+    mode: conversation.mode || "just-talk",
+    messages: conversation.messages || [],
+    isCrisisActive: !!conversation.isCrisisActive,
+    reflectionDraft: conversation.reflectionDraft || null,
+    createdAt: conversation.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const cleanPayload = sanitizeFirestoreData(payload);
+
+  await setDoc(convoRef, cleanPayload, { merge: true });
 }
 
 /**
@@ -752,3 +766,169 @@ export async function batchReassignLegendDoc(
     await setDoc(docRef, sanitizeFirestoreData(updatedDoc), { merge: true });
   } catch (e) {}
 }
+
+/**
+ * Save or update Period Reflection (Weekly, Monthly, Yearly)
+ * Path: /users/{userId}/{periodType}Reflections/{periodKey}
+ */
+export async function savePeriodReflectionDoc(
+  userId: string,
+  reflection: PeriodReflectionDoc
+): Promise<void> {
+  if (!userId) throw new Error("Authentication required to save reflection.");
+  if (!reflection || !reflection.periodKey || !reflection.periodType) {
+    throw new Error("Missing required reflection key or type.");
+  }
+
+  const collectionName = `${reflection.periodType}Reflections`;
+  const docRef = doc(db, "users", userId, collectionName, reflection.periodKey);
+
+  const cleanDoc = sanitizeFirestoreData({
+    ...reflection,
+    userId,
+    updatedAt: new Date().toISOString(),
+  });
+
+  await setDoc(docRef, cleanDoc, { merge: true });
+}
+
+export async function getPeriodReflectionDoc(
+  userId: string,
+  periodType: PeriodType,
+  periodKey: string
+): Promise<PeriodReflectionDoc | null> {
+  if (!userId || !periodType || !periodKey) return null;
+  const collectionName = `${periodType}Reflections`;
+  const docRef = doc(db, "users", userId, collectionName, periodKey);
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    return snap.data() as PeriodReflectionDoc;
+  }
+  return null;
+}
+
+export function subscribeToUserPeriodReflections(
+  userId: string,
+  periodType: PeriodType,
+  onUpdate: (reflections: PeriodReflectionDoc[]) => void,
+  onError?: (err: any) => void
+) {
+  if (!userId || !periodType) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  const collectionName = `${periodType}Reflections`;
+  const collRef = collection(db, "users", userId, collectionName);
+  const q = query(collRef, orderBy("periodKey", "desc"));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const list: PeriodReflectionDoc[] = [];
+      snapshot.forEach((snap) => {
+        list.push(snap.data() as PeriodReflectionDoc);
+      });
+      onUpdate(list);
+    },
+    (err) => {
+      console.error(`Firestore ${periodType}Reflections error:`, err);
+      if (onError) onError(err);
+    }
+  );
+}
+
+/**
+ * Contextual Reflections: Diary Reflection Documents
+ * Path: /users/{userId}/diaryReflections/{reflectionId}
+ */
+export async function saveDiaryReflectionDoc(
+  userId: string,
+  reflection: DiaryReflectionDoc
+): Promise<void> {
+  if (!userId) throw new Error("Authentication required to save diary reflection.");
+  const docRef = doc(db, "users", userId, "diaryReflections", reflection.id);
+  const clean = sanitizeFirestoreData({
+    ...reflection,
+    userId,
+    updatedAt: new Date().toISOString(),
+  });
+  await setDoc(docRef, clean, { merge: true });
+}
+
+export async function getDiaryReflectionDoc(
+  userId: string,
+  reflectionId: string
+): Promise<DiaryReflectionDoc | null> {
+  if (!userId || !reflectionId) return null;
+  const docRef = doc(db, "users", userId, "diaryReflections", reflectionId);
+  const snap = await getDoc(docRef);
+  if (snap.exists()) return snap.data() as DiaryReflectionDoc;
+  return null;
+}
+
+/**
+ * Contextual Reflections: Globe Reflection Documents
+ * Path: /users/{userId}/globeReflections/{reflectionId}
+ */
+export async function saveGlobeReflectionDoc(
+  userId: string,
+  reflection: GlobeReflectionDoc
+): Promise<void> {
+  if (!userId) throw new Error("Authentication required to save globe reflection.");
+  const docRef = doc(db, "users", userId, "globeReflections", reflection.id);
+  const clean = sanitizeFirestoreData({
+    ...reflection,
+    userId,
+    updatedAt: new Date().toISOString(),
+  });
+  await setDoc(docRef, clean, { merge: true });
+}
+
+export async function getGlobeReflectionDoc(
+  userId: string,
+  reflectionId: string
+): Promise<GlobeReflectionDoc | null> {
+  if (!userId || !reflectionId) return null;
+  const docRef = doc(db, "users", userId, "globeReflections", reflectionId);
+  const snap = await getDoc(docRef);
+  if (snap.exists()) return snap.data() as GlobeReflectionDoc;
+  return null;
+}
+
+/**
+ * User Notifications for One-Time Home Popups
+ * Path: /users/{userId}/notifications/{periodKey}
+ */
+export async function getUserNotificationDoc(
+  userId: string,
+  periodKey: string
+): Promise<UserNotificationDoc | null> {
+  if (!userId || !periodKey) return null;
+  const docRef = doc(db, "users", userId, "notifications", periodKey);
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    return snap.data() as UserNotificationDoc;
+  }
+  return null;
+}
+
+export async function markUserNotificationReadDoc(
+  userId: string,
+  periodType: PeriodType,
+  periodKey: string
+): Promise<void> {
+  if (!userId || !periodKey) return;
+  const docRef = doc(db, "users", userId, "notifications", periodKey);
+  const clean = sanitizeFirestoreData({
+    id: periodKey,
+    userId,
+    periodType,
+    periodKey,
+    isRead: true,
+    dismissedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  });
+  await setDoc(docRef, clean, { merge: true });
+}
+

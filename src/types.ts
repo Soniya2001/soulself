@@ -299,5 +299,71 @@ export interface AyraConversation {
   updatedAt: string;
 }
 
+export type PeriodType = "weekly" | "monthly" | "yearly";
+
+export interface PeriodReflectionDoc {
+  id: string; // Deterministic ID: YYYY-Www, YYYY-MM, or YYYY
+  userId: string;
+  periodType: PeriodType;
+  periodKey: string; // e.g. "2026-W37", "2026-09", "2026"
+  periodTitle: string; // e.g. "Week 37", "September 2026", "Year 2026"
+  startDate: string;
+  endDate: string;
+  journalCount: number;
+  journalDaysCount: number;
+  streakCount: number;
+  mostRecordedMood: string;
+  mostRecordedMoodEmoji: string;
+  topCategory: string;
+  locationCount: number;
+  summary: string;
+  emotionalSummary: string;
+  meaningfulMoments: string[];
+  brightSpots: string[];
+  challenges: string[];
+  themes: string[];
+  changes: string[];
+  explorationPrompts: string[];
+  nextQuestion: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContextualReflectionMessage {
+  id: string;
+  role: "user" | "agent";
+  content: string;
+  timestamp: string;
+}
+
+export interface DiaryReflectionDoc {
+  id: string;
+  userId: string;
+  journalId: string;
+  messages: ContextualReflectionMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GlobeReflectionDoc {
+  id: string;
+  userId: string;
+  locationName: string;
+  messages: ContextualReflectionMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserNotificationDoc {
+  id: string; // periodKey e.g. "2026-W37"
+  userId: string;
+  periodType: PeriodType;
+  periodKey: string;
+  isRead: boolean;
+  dismissedAt: string;
+  createdAt: string;
+}
+
+
 
 

@@ -25,6 +25,7 @@ interface MemoryCarouselProps {
   entries: JournalEntry[];
   onSelectEntry: (entry: JournalEntry) => void;
   onNewEntryWithLocation?: (location: JournalLocation) => void;
+  onReflectOnPlace?: () => void;
 }
 
 export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
@@ -32,6 +33,7 @@ export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
   entries,
   onSelectEntry,
   onNewEntryWithLocation,
+  onReflectOnPlace,
 }) => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const touchStartX = useRef<number | null>(null);
@@ -189,22 +191,34 @@ export const MemoryCarousel: React.FC<MemoryCarouselProps> = ({
           </p>
         </div>
 
-        {onNewEntryWithLocation && (
-          <button
-            onClick={() =>
-              onNewEntryWithLocation({
-                name: location.name,
-                country: location.country,
-                latitude: location.latitude,
-                longitude: location.longitude,
-              })
-            }
-            className="px-4 py-2 rounded-full bg-white hover:bg-pink-50 border border-pink-300 text-purple-950 font-bold text-xs shadow-2xs transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <Plus className="w-3.5 h-3.5 text-pink-600" />
-            <span>Add Memory Here</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {onReflectOnPlace && (
+            <button
+              onClick={onReflectOnPlace}
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-pink-200" />
+              <span>Reflect on This Place</span>
+            </button>
+          )}
+
+          {onNewEntryWithLocation && (
+            <button
+              onClick={() =>
+                onNewEntryWithLocation({
+                  name: location.name,
+                  country: location.country,
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                })
+              }
+              className="px-4 py-2 rounded-full bg-white hover:bg-pink-50 border border-pink-300 text-purple-950 font-bold text-xs shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5 text-pink-600" />
+              <span>Add Memory Here</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. Center-Focused 3D Stacked Carousel Container */}

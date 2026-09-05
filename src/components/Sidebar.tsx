@@ -29,7 +29,8 @@ export type NavViewType =
   | "emotional"
   | "ayra"
   | "diary-book"
-  | "trackers";
+  | "trackers"
+  | "reflection-corner";
 
 interface SidebarProps {
   currentView: NavViewType;
@@ -108,6 +109,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: "globe" as NavViewType,
       label: "Memory Globe",
       icon: Globe,
+      badge: null,
+      color: "hover:bg-pink-50 text-pink-900 font-semibold",
+      activeColor: "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-md",
+    },
+    {
+      id: "reflection-corner" as NavViewType,
+      label: "Reflection Corner",
+      icon: Sparkles,
       badge: null,
       color: "hover:bg-pink-50 text-pink-900 font-semibold",
       activeColor: "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white font-extrabold shadow-md",
