@@ -42,12 +42,14 @@ export const RecentJournals: React.FC<RecentJournalsProps> = ({
     }
   };
 
-  // Sort entries by most recently updated/created/dated
-  const sortedRecentEntries = [...entries].sort((a, b) => {
-    const dateA = a.updatedAt || a.createdAt || a.date;
-    const dateB = b.updatedAt || b.createdAt || b.date;
-    return new Date(dateB).getTime() - new Date(dateA).getTime();
-  });
+  // Sort entries by most recently updated/created/dated and limit to 3 recent entries
+  const sortedRecentEntries = [...entries]
+    .sort((a, b) => {
+      const dateA = a.updatedAt || a.createdAt || a.date;
+      const dateB = b.updatedAt || b.createdAt || b.date;
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    })
+    .slice(0, 3);
 
   return (
     <div id="recent-journals-section" className="mb-12">
