@@ -46,8 +46,12 @@ export async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    // If popup is blocked by iframe environment, try redirect or throw friendly message
-    console.warn("Popup sign-in encounter:", error?.code, error?.message);
+    // SAFE diagnostic logging: log error metadata strictly without tokens or credentials
+    console.error("[Auth Diagnostic - firebase.ts]:", {
+      name: error?.name,
+      code: error?.code,
+      message: error?.message,
+    });
     throw error;
   }
 }

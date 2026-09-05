@@ -58,12 +58,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       await firebaseSignInWithGoogle();
     } catch (err: any) {
-      console.error("Google sign in error:", err);
+      console.error("[Auth Diagnostic - AuthContext.tsx]:", {
+        name: err?.name,
+        code: err?.code,
+        message: err?.message,
+      });
       let msg = "Unable to sign in with Google. Please try again.";
       if (err.code === "auth/popup-blocked") {
         msg = "The sign-in popup was blocked by your browser. Please allow popups or use demo mode.";
       } else if (err.code === "auth/popup-closed-by-user") {
         msg = "Sign in was cancelled.";
+      } else if (err.code === "auth/unauthorized-domain") {
+        msg = "This domain is not authorized for Google Sign-In in Firebase Console.";
       } else if (err.message) {
         msg = err.message;
       }
