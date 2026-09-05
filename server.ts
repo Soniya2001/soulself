@@ -76,7 +76,7 @@ async function getGenAI(): Promise<GoogleGenAI | null> {
   });
 }
 
-const CANDIDATE_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+const CANDIDATE_MODELS = ["gemini-3.7-flash", "gemini-2.5-flash", "gemini-3.5-flash", "gemini-2.5-pro"];
 
 async function safeGenerateContent(
   ai: GoogleGenAI,
@@ -93,6 +93,10 @@ async function safeGenerateContent(
     } catch (err: any) {
       console.warn(`[Gemini Model ${model} Warning]:`, err?.message || err);
       lastError = err;
+      const errMsg = String(err?.message || err);
+      if (errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429") || errMsg.includes("credits are depleted")) {
+        throw err;
+      }
     }
   }
   throw lastError;
@@ -113,6 +117,10 @@ async function safeGenerateContentStream(
     } catch (err: any) {
       console.warn(`[Gemini Stream Model ${model} Warning]:`, err?.message || err);
       lastError = err;
+      const errMsg = String(err?.message || err);
+      if (errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429") || errMsg.includes("credits are depleted")) {
+        throw err;
+      }
     }
   }
   throw lastError;
@@ -1044,8 +1052,11 @@ ${journalSnippet}`;
 
   // 7a. AYRA Streaming Chat (Server-Sent Events)
   app.post("/api/gemini/ayra/chat/stream", requireAuth, async (req, res) => {
+    console.log("[AYRA BACKEND] request received", { path: "/api/gemini/ayra/chat/stream" });
     try {
       const user = (req as any).user;
+      console.log("[AYRA BACKEND] authenticated uid", { uid: user?.uid });
+
       const { messages, mode = "just-talk", countryCode = "IN", journalContext, userName } = req.body;
 
       if (!checkAyraRateLimit(user.uid)) {
@@ -1066,6 +1077,7 @@ ${journalSnippet}`;
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache, no-transform");
       res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
       res.flushHeaders?.();
 
       // Handle safety scenarios immediately via SSE
@@ -1131,14 +1143,15 @@ ${journalSnippet}`;
 
       const ai = await getGenAI();
       if (!ai) {
-        const fallback = `I hear you 💜. When you're carrying feelings like this, take a quiet breath. I'm right here with you—tell me more about what's going on.`;
-        res.write(`data: ${JSON.stringify({ chunk: fallback })}\n\n`);
-        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        console.error("[AYRA BACKEND ERROR] Gemini API key not available");
+        res.write(`data: ${JSON.stringify({ error: "Gemini API key is not configured on the server.", done: true })}\n\n`);
         return res.end();
       }
 
       const formattedHistory = formatAyraHistoryForGemini(userMessages);
       const systemInstruction = buildAyraSystemInstruction(userDisplayName, mode, journalContext);
+
+      console.log("[AYRA BACKEND] Gemini request started", { historyLength: formattedHistory.length });
 
       let isClosed = false;
       req.on("close", () => {
@@ -1157,7 +1170,9 @@ ${journalSnippet}`;
         if (isClosed) break;
         const chunkText = chunk.text;
         if (chunkText) {
+          console.log("[AYRA BACKEND] Gemini chunk received", { length: chunkText.length });
           res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
+          console.log("[AYRA BACKEND] SSE chunk emitted");
           // Explicitly flush to ensure data is sent immediately (not buffered)
           if (typeof (res as any).flush === "function") {
             (res as any).flush();
@@ -1170,11 +1185,11 @@ ${journalSnippet}`;
         res.end();
       }
     } catch (err: any) {
-      console.error("[AYRA Chat Stream Error]:", err?.name || "Server error");
+      console.error("[AYRA BACKEND ERROR] Chat Stream Error:", err?.message || err);
       if (!res.headersSent) {
-        res.status(500).json({ error: "AYRA streaming failed" });
+        res.status(500).json({ error: err?.message || "AYRA streaming failed" });
       } else {
-        res.write(`data: ${JSON.stringify({ error: "Stream error", done: true })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: err?.message || "Stream error", done: true })}\n\n`);
         res.end();
       }
     }
@@ -1519,9 +1534,9 @@ Guidelines:
 
   // 11. Memory Globe Contextual Reflection Agent ("Remember with me about this place")
   app.post("/api/gemini/reflection/globe", requireAuth, async (req, res) => {
+    const { locationName = "this place", matchedJournals, messages, userName } = req.body || {};
     try {
       const user = (req as any).user;
-      const { locationName, matchedJournals, messages, userName } = req.body;
       const ai = await getGenAI();
 
       const userDisplayName = userName || user.name || "Friend";

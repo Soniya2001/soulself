@@ -237,6 +237,8 @@ export async function streamAyraChatMessage(params: {
   }) => void;
 }): Promise<string> {
   try {
+    console.log("[AYRA CLIENT] request started", { messageCount: params.messages?.length });
+
     const token = await getCurrentIdToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -266,14 +268,7 @@ export async function streamAyraChatMessage(params: {
         ? "Too many messages. Please wait a moment."
         : `Server error (${response.status})`;
       console.warn("[AYRA Stream] Non-OK response:", response.status, statusText);
-      // Fallback to standard non-streaming endpoint
-      const fallbackData = await sendAyraChatMessage(params);
-      if (fallbackData.isSafetyResponse && params.onSafetyResponse) {
-        params.onSafetyResponse(fallbackData);
-      } else {
-        params.onChunk(fallbackData.reply);
-      }
-      return fallbackData.reply;
+      throw new Error(statusText);
     }
 
     if (!response.body) {
@@ -287,50 +282,85 @@ export async function streamAyraChatMessage(params: {
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("data:")) continue;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
 
-        const jsonStr = trimmed.replace(/^data:\s*/, "");
-        if (jsonStr === "[DONE]") break;
+          const jsonStr = trimmed.replace(/^data:\s*/, "");
+          if (jsonStr === "[DONE]") {
+            break;
+          }
 
-        try {
-          const parsed = JSON.parse(jsonStr);
+          try {
+            const parsed = JSON.parse(jsonStr);
 
-          // Check for safety response payload
-          if (parsed.isSafetyResponse) {
-            if (params.onSafetyResponse) {
-              params.onSafetyResponse(parsed);
+            if (parsed.error) {
+              console.error("[AYRA CLIENT ERROR]", parsed.error);
+              throw new Error(parsed.error);
             }
-            return parsed.reply || "";
-          }
 
-          if (parsed.chunk) {
-            accumulatedText += parsed.chunk;
-            params.onChunk(parsed.chunk);
+            // Check for safety response payload
+            if (parsed.isSafetyResponse) {
+              if (params.onSafetyResponse) {
+                params.onSafetyResponse(parsed);
+              }
+              return parsed.reply || "";
+            }
+
+            if (parsed.chunk) {
+              accumulatedText += parsed.chunk;
+              console.log("[AYRA CLIENT] SSE chunk received", { length: parsed.chunk.length });
+              params.onChunk(parsed.chunk);
+            }
+
+            if (parsed.done) {
+              // Stream completed signal
+            }
+          } catch (jsonErr: any) {
+            if (jsonErr?.message && jsonErr.message.includes("Gemini")) {
+              throw jsonErr;
+            }
           }
-        } catch {
-          // Ignore JSON parse errors for incomplete line fragments
+        }
+      }
+
+      if (done) break;
+    }
+
+    // Process leftover buffer content
+    if (buffer.trim()) {
+      const trimmed = buffer.trim();
+      if (trimmed.startsWith("data:")) {
+        const jsonStr = trimmed.replace(/^data:\s*/, "");
+        if (jsonStr !== "[DONE]") {
+          try {
+            const parsed = JSON.parse(jsonStr);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.isSafetyResponse && params.onSafetyResponse) {
+              params.onSafetyResponse(parsed);
+              return parsed.reply || "";
+            }
+            if (parsed.chunk) {
+              accumulatedText += parsed.chunk;
+              console.log("[AYRA CLIENT] SSE chunk received", { length: parsed.chunk.length });
+              params.onChunk(parsed.chunk);
+            }
+          } catch {}
         }
       }
     }
 
+    console.log("[AYRA CLIENT] stream completed", { totalLength: accumulatedText.length });
     return accumulatedText;
   } catch (err: any) {
-    console.warn("Streaming encountered an issue, trying standard call:", err);
-    const fallback = await sendAyraChatMessage(params);
-    if (fallback.isSafetyResponse && params.onSafetyResponse) {
-      params.onSafetyResponse(fallback);
-    } else {
-      params.onChunk(fallback.reply);
-    }
-    return fallback.reply;
+    console.error("[AYRA CLIENT ERROR] Streaming error:", err);
+    throw err;
   }
 }
 

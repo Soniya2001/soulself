@@ -11,7 +11,6 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { sanitizeFirestoreData } from "../utils/firestoreSanitizer";
 import {
   JournalEntry,
   UserProfile,

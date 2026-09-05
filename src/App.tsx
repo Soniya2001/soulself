@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import type { User } from "firebase/auth";
 import {
   Sparkles,
   BookHeart,
@@ -96,6 +97,15 @@ function MainAppContent() {
   const [activeEntry, setActiveEntry] = useState<JournalEntry | null>(null);
 
   const hasSeededWelcomeRef = useRef<Record<string, boolean>>({});
+  const prevUserRef = useRef<User | null>(null);
+
+  // Ensure Splash Screen ("Welcome Home") is shown whenever user signs in
+  useEffect(() => {
+    if (user && !prevUserRef.current) {
+      setShowSplash(true);
+    }
+    prevUserRef.current = user;
+  }, [user]);
 
   // Synchronize Firestore Real-Time Stream whenever authenticated user changes
   useEffect(() => {

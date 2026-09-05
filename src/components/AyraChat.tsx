@@ -64,6 +64,13 @@ const AYRA_PROMPT_SPARKS = [
   "Let's reflect on how this week went 📖",
 ];
 
+const CONVERSATION_MODES: { id: string; label: string; emoji: string }[] = [
+  { id: "just-talk", label: "Just Talk", emoji: "💜" },
+  { id: "vent", label: "Vent & Release", emoji: "🌧️" },
+  { id: "reflect", label: "Mindful Reflection", emoji: "✨" },
+  { id: "advice", label: "Gentle Guidance", emoji: "🌱" },
+];
+
 const INITIAL_WELCOME_MESSAGE: AyraMessage = {
   id: "ayra-welcome",
   role: "ayra",
@@ -199,6 +206,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
         onChunk: (chunk) => {
           streamBuffer += chunk;
           setIsTyping(false);
+          console.log("[AYRA CLIENT] message state updated", { bufferLength: streamBuffer.length });
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === ayraPlaceholderId);
             if (!exists) {
@@ -276,6 +284,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
         };
 
         await saveAyraConversationDoc(user.uid, conversationDoc);
+        console.log("[AYRA FIRESTORE] conversation saved", { conversationId: activeConversationId, uid: user.uid });
       }
     } catch (err: any) {
       console.error("Failed to send message to AYRA:", err);

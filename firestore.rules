@@ -1,12 +1,14 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User-isolated namespace: strictly authorized to owner only
+
+    // User root document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // AYRA AI conversations subcollection
+    // AYRA AI conversations
     match /users/{userId}/ayraConversations/{conversationId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -53,15 +55,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Catch-all wildcard under user namespace
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Explicit fallback: reject any unmapped path
+    // Deny-by-default for any unmapped paths or top-level collections
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
+
 
