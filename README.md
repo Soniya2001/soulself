@@ -4,6 +4,19 @@
 
 ---
 
+## 🌐 Live Application & Cloud Run Deployment
+
+| Property | Details |
+| :--- | :--- |
+| **Live Cloud Run URL** | [https://soulself-3szof4ofua-uc.a.run.app](https://soulself-3szof4ofua-uc.a.run.app) |
+| **Cloud Run Service Name** | `soulself` |
+| **GCP Region** | `us-central1` |
+| **Public Access** | Enabled (`allUsers` invoker role) |
+| **Challenge Label** | `dev-tutorial=cloud-run-ai-challenge` |
+| **Deployment Status** | Active & Deployed |
+
+---
+
 ## ✨ Overview
 
 **SoulSelf** is an editorial personal journaling platform enriched with **AYRA**, a compassionate multi-mode AI companion powered by Google Gemini. SoulSelf combines creative self-expression (interactive stickers, ambient soundscapes, 3D memory globe) with intelligent reflection tools (automatic sentiment analysis, structured summaries, and crisis safety support).
@@ -52,10 +65,38 @@
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4 |
 | **Icons & UI** | Lucide React, Motion (Framer Motion), Canvas Confetti |
 | **3D & Canvas** | Three.js (`three`) |
-| **Backend API** | Express.js, TypeScript (`tsx` runtime) |
-| **AI Models** | Google GenAI SDK (`@google/genai`), Gemini 3.7 Flash |
+| **Backend API** | Express.js, TypeScript (`tsx` runtime / `esbuild`) |
+| **AI Models** | Google GenAI SDK (`@google/genai`), Gemini 3.7 / 2.5 Flash |
 | **Auth & Database** | Firebase Authentication (Google Auth / Demo mode), Cloud Firestore |
+| **Cloud Hosting** | Google Cloud Run (Containerized Docker deployment) |
 | **Cloud Secrets** | Google Cloud Secret Manager (`@google-cloud/secret-manager`), `dotenv` |
+
+---
+
+## ☁️ Google Cloud Run Deployment & Challenge Label
+
+The SoulSelf application is containerized with Docker and deployed to Google Cloud Run.
+
+### Required Challenge Label
+To satisfy automated verification for the Cloud Run AI Challenge, the service carries the following label:
+```yaml
+dev-tutorial: cloud-run-ai-challenge
+```
+
+### Applying or Updating the Label
+```bash
+gcloud run services update soulself \
+  --region us-central1 \
+  --update-labels dev-tutorial=cloud-run-ai-challenge
+```
+
+### Verifying the Label
+```bash
+gcloud run services describe soulself \
+  --region us-central1 \
+  --format="value(metadata.labels.dev-tutorial)"
+```
+*Expected Output:* `cloud-run-ai-challenge`
 
 ---
 
@@ -80,6 +121,7 @@ soulself/
 │   ├── App.tsx                 # Core App Shell & Views
 │   └── main.tsx                # React Root Entrypoint
 ├── server.ts                   # Express Backend Server (Gemini API & Auth Middleware)
+├── Dockerfile                  # Multi-stage Docker build configuration for Cloud Run
 ├── firebase-applet-config.json # Firebase Web App Configuration
 ├── firestore.rules             # Cloud Firestore Security Rules
 ├── .env.example                # Environment Variable Template
