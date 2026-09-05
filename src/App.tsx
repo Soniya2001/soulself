@@ -659,115 +659,102 @@ function MainAppContent() {
         {/* View 7: Default Editorial Dashboard */}
         {currentView === "dashboard" && (
           <div className="animate-fade-in space-y-8">
-            {/* 12-Column Editorial Dashboard Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-6">
-              {/* Left Column (8 cols): Greeting, Big Action, Stats, AYRA, Emotional Journey & Calendar */}
-              <div className="lg:col-span-8 flex flex-col gap-8">
-                {/* Hero Greeting & Editorial Action Button */}
-                <div className="space-y-4">
-                  <h1
-                    id="dashboard-greeting-title"
-                    className="font-serif text-4xl sm:text-5xl md:text-6xl text-purple-950 font-bold tracking-tight leading-tight"
+            {/* Full-Width Dashboard Content */}
+            <div className="flex flex-col gap-8 mb-6">
+              {/* Hero Greeting & Editorial Action Button */}
+              <div className="space-y-4">
+                <h1
+                  id="dashboard-greeting-title"
+                  className="font-serif text-4xl sm:text-5xl md:text-6xl text-purple-950 font-bold tracking-tight leading-tight"
+                >
+                  {getGreeting()},{" "}
+                  <span className="italic font-serif text-pink-600 font-normal">
+                    {userProfile.name}.
+                  </span>{" "}
+                  🌸
+                </h1>
+                <p className="font-serif italic text-lg sm:text-xl text-purple-900/70 max-w-xl">
+                  The sun is high, and your space is ready for your thoughts.
+                </p>
+
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4">
+                  {/* Editorial Main Action CTA Button */}
+                  <button
+                    id="main-write-journal-cta-card"
+                    onClick={() => handleStartNewJournal()}
+                    className="bg-white border border-pink-200 text-purple-950 px-7 py-4 rounded-full shadow-md flex items-center gap-3 hover:shadow-xl hover:border-pink-300 hover:scale-[1.01] active:scale-[0.99] transition-all group w-fit cursor-pointer"
                   >
-                    {getGreeting()},{" "}
-                    <span className="italic font-serif text-pink-600 font-normal">
-                      {userProfile.name}.
-                    </span>{" "}
-                    🌸
-                  </h1>
-                  <p className="font-serif italic text-lg sm:text-xl text-purple-900/70 max-w-xl">
-                    The sun is high, and your space is ready for your thoughts.
-                  </p>
-
-                  <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4">
-                    {/* Editorial Main Action CTA Button */}
-                    <button
-                      id="main-write-journal-cta-card"
-                      onClick={() => handleStartNewJournal()}
-                      className="bg-white border border-pink-200 text-purple-950 px-7 py-4 rounded-full shadow-md flex items-center gap-3 hover:shadow-xl hover:border-pink-300 hover:scale-[1.01] active:scale-[0.99] transition-all group w-fit cursor-pointer"
-                    >
-                      <span className="font-bold uppercase tracking-widest text-xs">
-                        Write Journal
-                      </span>
-                      <div className="w-7 h-7 rounded-full bg-pink-100/80 group-hover:bg-pink-200 text-pink-700 flex items-center justify-center transition-colors">
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </div>
-                    </button>
-
-                    {/* Open Full Physical Diary Book Button */}
-                    <button
-                      id="main-open-diary-book-btn"
-                      onClick={() => handleOpenDiaryBook(1)}
-                      className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-7 py-4 rounded-full shadow-md flex items-center gap-3 hover:shadow-xl hover:from-pink-600 hover:to-purple-700 hover:scale-[1.01] active:scale-[0.99] transition-all group w-fit cursor-pointer"
-                    >
-                      <BookHeart className="w-4 h-4 text-pink-100" />
-                      <span className="font-bold uppercase tracking-widest text-xs">
-                        Open Diary Book 📖
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* Diary Quick Nav Chips: About Me, Bucket List, Recent */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[11px] uppercase font-bold text-purple-900/50 mr-1">
-                      Quick Open:
+                    <span className="font-bold uppercase tracking-widest text-xs">
+                      Write Journal
                     </span>
-                    <button
-                      onClick={() => handleOpenDiaryBook(1)}
-                      className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
-                    >
-                      ✨ Page 1: About Me
-                    </button>
-                    <button
-                      onClick={() => handleOpenDiaryBook(2)}
-                      className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
-                    >
-                      🎯 Page 2: Bucket List
-                    </button>
-                    {entries.length > 0 && (
-                      <button
-                        onClick={() => handleOpenDiaryBook(3)}
-                        className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
-                      >
-                        📖 Page 3: Latest Journal
-                      </button>
-                    )}
-                  </div>
+                    <div className="w-7 h-7 rounded-full bg-pink-100/80 group-hover:bg-pink-200 text-pink-700 flex items-center justify-center transition-colors">
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+
+                  {/* Open Full Physical Diary Book Button */}
+                  <button
+                    id="main-open-diary-book-btn"
+                    onClick={() => handleOpenDiaryBook(1)}
+                    className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-7 py-4 rounded-full shadow-md flex items-center gap-3 hover:shadow-xl hover:from-pink-600 hover:to-purple-700 hover:scale-[1.01] active:scale-[0.99] transition-all group w-fit cursor-pointer"
+                  >
+                    <BookHeart className="w-4 h-4 text-pink-100" />
+                    <span className="font-bold uppercase tracking-widest text-xs">
+                      Open Diary Book 📖
+                    </span>
+                  </button>
                 </div>
 
-                {/* 4 Dashboard Statistics Cards */}
-                <DashboardStats entries={entries} />
-
-                {/* Emotion KPI Breakdown Cards (Days logged per emotion) */}
-                <EmotionKPICards
-                  entries={entries}
-                  onSelectMood={(mood) => handleStartNewJournal(mood)}
-                />
-
-                {/* Emotional Journey & Mood Flow */}
-                <EmotionalJourney
-                  entries={entries}
-                  onSelectEntry={handleOpenExistingEntry}
-                  onNewJournalClick={() => handleStartNewJournal()}
-                />
-
-                {/* Calendar View */}
-                <JournalCalendar
-                  entries={entries}
-                  onSelectEntry={handleOpenExistingEntry}
-                  onWriteForDate={(dateStr) => handleStartNewJournal(undefined, dateStr)}
-                />
+                {/* Diary Quick Nav Chips: About Me, Bucket List, Recent */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="text-[11px] uppercase font-bold text-purple-900/50 mr-1">
+                    Quick Open:
+                  </span>
+                  <button
+                    onClick={() => handleOpenDiaryBook(1)}
+                    className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                  >
+                    ✨ Page 1: About Me
+                  </button>
+                  <button
+                    onClick={() => handleOpenDiaryBook(2)}
+                    className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                  >
+                    🎯 Page 2: Bucket List
+                  </button>
+                  {entries.length > 0 && (
+                    <button
+                      onClick={() => handleOpenDiaryBook(3)}
+                      className="px-3 py-1 rounded-full bg-white/90 hover:bg-pink-50 border border-pink-200/80 text-xs text-purple-900 font-serif font-semibold shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                    >
+                      📖 Page 3: Latest Journal
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Right Column (4 cols): Gemini Noticed Card */}
-              <div className="lg:col-span-4 flex flex-col gap-8">
-                {/* Gemini Noticed Dark Editorial Card */}
-                <GeminiReflectionCard
-                  entries={entries}
-                  userName={userProfile.name}
-                  onPromptClick={(prompt) => handleStartNewJournal(undefined, undefined, prompt)}
-                />
-              </div>
+              {/* 4 Dashboard Statistics Cards */}
+              <DashboardStats entries={entries} />
+
+              {/* Emotion KPI Breakdown Cards (Days logged per emotion) */}
+              <EmotionKPICards
+                entries={entries}
+                onSelectMood={(mood) => handleStartNewJournal(mood)}
+              />
+
+              {/* Emotional Journey & Mood Flow */}
+              <EmotionalJourney
+                entries={entries}
+                onSelectEntry={handleOpenExistingEntry}
+                onNewJournalClick={() => handleStartNewJournal()}
+              />
+
+              {/* Calendar View */}
+              <JournalCalendar
+                entries={entries}
+                onSelectEntry={handleOpenExistingEntry}
+                onWriteForDate={(dateStr) => handleStartNewJournal(undefined, dateStr)}
+              />
             </div>
 
             {/* Single Curated Recent Journals Section */}
