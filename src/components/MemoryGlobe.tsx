@@ -622,14 +622,8 @@ export const MemoryGlobe: React.FC<MemoryGlobeProps> = ({
 
       {/* Center-Focused Memory Stack Carousel underneath the Globe */}
       <MemoryCarousel
-        location={activeLocation || (filteredLocationGroups.length > 0 ? filteredLocationGroups[0] : null)}
-        entries={
-          activeLocation
-            ? activeLocation.entries
-            : filteredLocationGroups.length > 0
-            ? filteredLocationGroups[0].entries
-            : []
-        }
+        location={activeLocation}
+        entries={activeLocation ? activeLocation.entries : []}
         onSelectEntry={onSelectEntry}
         onNewEntryWithLocation={onNewEntryWithLocation}
       />
