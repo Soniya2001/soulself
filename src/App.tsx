@@ -737,14 +737,6 @@ function MainAppContent() {
                 {/* 4 Dashboard Statistics Cards */}
                 <DashboardStats entries={entries} />
 
-                {/* AYRA AI Companion Warm Spotlight Card - Located Above Emotional Journey */}
-                <AyraSpotlightCard
-                  userName={userProfile.name}
-                  onStartAyra={(mode) => {
-                    setCurrentView("ayra");
-                  }}
-                />
-
                 {/* Emotional Journey & Mood Flow */}
                 <EmotionalJourney
                   entries={entries}
