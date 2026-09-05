@@ -39,41 +39,6 @@ export const AyraSpotlightCard: React.FC<AyraSpotlightCardProps> = ({ onStartAyr
           <p className="font-serif italic text-sm text-purple-900/70 leading-relaxed">
             You can talk to AYRA about your day, your feelings, or ideas that feel tangled. No judgment. Just a quiet space to breathe, think, and grow.
           </p>
-
-          {/* Quick Mode Starters */}
-          <div className="pt-2 flex flex-wrap gap-2">
-            <button
-              onClick={() => onStartAyra("just-talk")}
-              className="px-3 py-1.5 rounded-full bg-white/90 hover:bg-pink-100/70 text-purple-950 text-xs font-serif font-medium border border-pink-200/70 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <span>💬</span>
-              <span>Just Talk</span>
-            </button>
-
-            <button
-              onClick={() => onStartAyra("vent")}
-              className="px-3 py-1.5 rounded-full bg-white/90 hover:bg-pink-100/70 text-purple-950 text-xs font-serif font-medium border border-pink-200/70 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <span>☁️</span>
-              <span>Let Me Vent</span>
-            </button>
-
-            <button
-              onClick={() => onStartAyra("motivate")}
-              className="px-3 py-1.5 rounded-full bg-white/90 hover:bg-pink-100/70 text-purple-950 text-xs font-serif font-medium border border-pink-200/70 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <span>🌱</span>
-              <span>Motivate Me</span>
-            </button>
-
-            <button
-              onClick={() => onStartAyra("think")}
-              className="px-3 py-1.5 rounded-full bg-white/90 hover:bg-pink-100/70 text-purple-950 text-xs font-serif font-medium border border-pink-200/70 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <span>🧠</span>
-              <span>Help Me Think</span>
-            </button>
-          </div>
         </div>
 
         {/* Right CTA Button */}

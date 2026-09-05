@@ -295,34 +295,40 @@ export function subscribeToUserAyraConversations(
     return () => {};
   }
 
-  const convosRef = collection(db, "users", userId, "ayraConversations");
-  const q = query(convosRef, orderBy("updatedAt", "desc"));
+  try {
+    const convosRef = collection(db, "users", userId, "ayraConversations");
+    const q = query(convosRef, orderBy("updatedAt", "desc"));
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const convos: AyraConversation[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        convos.push({
-          id: docSnap.id,
-          userId,
-          title: data.title || "Untitled Chat",
-          mode: data.mode || "just-talk",
-          createdAt: data.createdAt || new Date().toISOString(),
-          updatedAt: data.updatedAt || new Date().toISOString(),
-          messages: data.messages || [],
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const convos: AyraConversation[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          convos.push({
+            id: docSnap.id,
+            userId,
+            title: data.title || "Untitled Chat",
+            mode: data.mode || "just-talk",
+            createdAt: data.createdAt || new Date().toISOString(),
+            updatedAt: data.updatedAt || new Date().toISOString(),
+            messages: data.messages || [],
+          });
         });
-      });
-      onUpdate(convos);
-    },
-    (err) => {
-      console.error("Firestore AYRA conversations subscription error:", err);
-      if (onError) onError(err);
-    }
-  );
+        onUpdate(convos);
+      },
+      (err) => {
+        console.warn("Firestore AYRA conversations subscription error:", err?.message || err);
+        if (onError) onError(err);
+      }
+    );
 
-  return unsubscribe;
+    return unsubscribe;
+  } catch (err) {
+    console.warn("Firestore AYRA conversations subscription init error:", err);
+    onUpdate([]);
+    return () => {};
+  }
 }
 
 /**
@@ -332,26 +338,29 @@ export async function saveAyraConversationDoc(
   userId: string,
   conversation: AyraConversation
 ): Promise<void> {
-  if (!userId) throw new Error("Authentication required to save AYRA conversation.");
-  if (!conversation || !conversation.id) throw new Error("Conversation ID is required.");
+  if (!userId || !conversation || !conversation.id) return;
 
-  const convoRef = doc(db, "users", userId, "ayraConversations", conversation.id);
+  try {
+    const convoRef = doc(db, "users", userId, "ayraConversations", conversation.id);
 
-  const payload = {
-    id: conversation.id,
-    userId,
-    title: conversation.title || "Talk with AYRA",
-    mode: conversation.mode || "just-talk",
-    messages: conversation.messages || [],
-    isCrisisActive: !!conversation.isCrisisActive,
-    reflectionDraft: conversation.reflectionDraft || null,
-    createdAt: conversation.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+    const payload = {
+      id: conversation.id,
+      userId,
+      title: conversation.title || "Talk with AYRA",
+      mode: conversation.mode || "just-talk",
+      messages: conversation.messages || [],
+      isCrisisActive: !!conversation.isCrisisActive,
+      reflectionDraft: conversation.reflectionDraft || null,
+      createdAt: conversation.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-  const cleanPayload = sanitizeFirestoreData(payload);
+    const cleanPayload = sanitizeFirestoreData(payload);
 
-  await setDoc(convoRef, cleanPayload, { merge: true });
+    await setDoc(convoRef, cleanPayload, { merge: true });
+  } catch (err) {
+    console.warn("Firestore saveAyraConversationDoc error:", err);
+  }
 }
 
 /**

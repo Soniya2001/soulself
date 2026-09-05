@@ -55,82 +55,14 @@ interface AyraChatProps {
   onBackToDashboard?: () => void;
 }
 
-const CONVERSATION_MODES: {
-  id: AyraConversationMode;
-  label: string;
-  emoji: string;
-  tagline: string;
-  description: string;
-}[] = [
-  {
-    id: "just-talk",
-    label: "Just Talk",
-    emoji: "💬",
-    tagline: "Casual conversation & companionship",
-    description: "A relaxed, friendly chat about your day, interests, or whatever is on your mind.",
-  },
-  {
-    id: "vent",
-    label: "Let Me Vent",
-    emoji: "☁️",
-    tagline: "Listening without unsolicited advice",
-    description: "AYRA holds space for you to let everything out without rushing to fix it.",
-  },
-  {
-    id: "motivate",
-    label: "Motivate Me",
-    emoji: "🌱",
-    tagline: "Encouraging, practical next steps",
-    description: "Grounded encouragement to break down overwhelm into bite-sized 15-minute actions.",
-  },
-  {
-    id: "think",
-    label: "Help Me Think",
-    emoji: "🧠",
-    tagline: "Brainstorming & structured clarity",
-    description: "Unravel tangled thoughts, clarify choices, and explore perspectives together.",
-  },
-  {
-    id: "reflect",
-    label: "Reflect With Me",
-    emoji: "📖",
-    tagline: "Mindful reflection & journaling",
-    description: "Deepen your thoughts and optionally save our conversation as a private journal entry.",
-  },
+const AYRA_PROMPT_SPARKS = [
+  "How was your day so far? 🌸",
+  "I had a strange thought today...",
+  "Tell me something peaceful ✨",
+  "I just need a cozy distraction",
+  "Help me sort out what's on my mind",
+  "Let's reflect on how this week went 📖",
 ];
-
-const MODE_PROMPT_SPARKS: Record<AyraConversationMode, string[]> = {
-  "just-talk": [
-    "How was your day so far? 🌸",
-    "I had a strange thought today...",
-    "Tell me something peaceful ✨",
-    "I just need a cozy distraction",
-  ],
-  vent: [
-    "Today has been completely draining 🌧️",
-    "I feel like no one understands what I'm dealing with",
-    "I'm feeling really anxious about something",
-    "I just need to let this off my chest",
-  ],
-  motivate: [
-    "I'm procrastinating on an important task 🌱",
-    "Help me take just one small step today",
-    "I'm feeling stuck and unmotivated",
-    "How do I reset my focus for the evening?",
-  ],
-  think: [
-    "Help me choose between two options 🧠",
-    "My mind is totally tangled, help me sort it out",
-    "I want to brainstorm a creative idea",
-    "Help me look at this situation from another angle",
-  ],
-  reflect: [
-    "Let's reflect on how this week went 📖",
-    "What is a lesson I can take from today?",
-    "I want to explore why I'm feeling this way",
-    "Help me turn my thoughts into a journal entry",
-  ],
-};
 
 const INITIAL_WELCOME_MESSAGE: AyraMessage = {
   id: "ayra-welcome",
@@ -480,8 +412,6 @@ export const AyraChat: React.FC<AyraChatProps> = ({
     }
   };
 
-  const activeModeObj = CONVERSATION_MODES.find((m) => m.id === currentMode) || CONVERSATION_MODES[0];
-  const currentSparks = MODE_PROMPT_SPARKS[currentMode] || MODE_PROMPT_SPARKS["just-talk"];
   const isOnlyWelcomeMessage = messages.length === 1 && messages[0].id === "ayra-welcome";
 
   // Filtered conversations for history drawer
@@ -522,7 +452,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
             <p className="text-xs text-purple-900/60 font-serif italic line-clamp-1">
               {isCrisisActive
                 ? "Here with you • Compassionate & Safe Support"
-                : activeModeObj.tagline}
+                : "Casual conversation & companionship"}
             </p>
           </div>
         </div>
@@ -599,33 +529,6 @@ export const AyraChat: React.FC<AyraChatProps> = ({
           )}
         </div>
       </header>
-
-      {/* 2. Conversation Mode Strip */}
-      {!isCrisisActive && (
-        <div className="px-4 sm:px-6 py-2.5 bg-[#FFF9FB]/90 border-b border-pink-100/80 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 z-0">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-purple-900/50 mr-1 hidden sm:inline">
-            Mode:
-          </span>
-          {CONVERSATION_MODES.map((mode) => {
-            const isSelected = currentMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => setCurrentMode(mode.id)}
-                title={mode.description}
-                className={`px-3 py-1.5 rounded-full text-xs font-serif font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                  isSelected
-                    ? "bg-gradient-to-r from-pink-500 via-pink-600 to-rose-500 text-white shadow-xs scale-102"
-                    : "bg-white/80 hover:bg-pink-100/60 text-purple-900/80 border border-pink-200/50"
-                }`}
-              >
-                <span>{mode.emoji}</span>
-                <span>{mode.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       {/* 3. Safety Notice Bar during Active Crisis Support */}
       {isCrisisActive && (
@@ -794,15 +697,15 @@ export const AyraChat: React.FC<AyraChatProps> = ({
           </div>
         )}
 
-        {/* Mode Conversation Sparks (Shown when chat is new) */}
+        {/* Conversation Sparks (Shown when chat is new) */}
         {isOnlyWelcomeMessage && (
           <div className="pt-4 pb-2 px-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="text-[11px] font-bold font-serif uppercase tracking-wider text-purple-900/50 mb-2 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-pink-500" />
-              <span>Suggested prompts for {activeModeObj.label}</span>
+              <span>Suggested prompts to start our conversation</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {currentSparks.map((spark, idx) => (
+              {AYRA_PROMPT_SPARKS.map((spark, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(spark)}
@@ -843,7 +746,7 @@ export const AyraChat: React.FC<AyraChatProps> = ({
               placeholder={
                 isCrisisActive
                   ? "Talk to AYRA, or tap any support button above..."
-                  : `Talk to AYRA (${activeModeObj.label})... (Shift+Enter for newline)`
+                  : "Talk to AYRA... (Shift+Enter for newline)"
               }
               aria-label="Talk to AYRA"
               className="flex-1 bg-transparent border-0 outline-none resize-none px-3 py-1.5 text-sm sm:text-base font-serif text-purple-950 placeholder:text-purple-900/40 min-h-[38px] max-h-[140px]"
