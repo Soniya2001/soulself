@@ -48,20 +48,85 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ entries }) => {
   };
   const streakDays = calculateStreak();
 
-  // Overall Emotional Tone calculation
+  // Dynamic Emotional Tone calculation analyzing all entry mood KPIs
   const getEmotionalTone = () => {
-    if (entries.length === 0) return { tone: "Mostly Positive", emoji: "😊", sub: "Grounded & Optimistic" };
-    const positiveMoods = ["Happy", "Calm", "Excited"];
-    const positiveCount = entries.filter((e) => positiveMoods.includes(e.mood)).length;
-    const ratio = positiveCount / entries.length;
-
-    if (ratio >= 0.6) {
-      return { tone: "Mostly Positive", emoji: "😊", sub: `${Math.round(ratio * 100)}% Uplifting Moments` };
-    } else if (ratio >= 0.4) {
-      return { tone: "Gentle & Balanced", emoji: "🌿", sub: "Thoughtful Equanimity" };
-    } else {
-      return { tone: "Deeply Reflective", emoji: "💭", sub: "Processing & Growing" };
+    if (entries.length === 0) {
+      return { tone: "No Entries Yet", emoji: "🌸", sub: "Awaiting reflections" };
     }
+
+    const moodCounts: Record<string, number> = {};
+    entries.forEach((e) => {
+      if (e.mood) {
+        moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+      }
+    });
+
+    // Find the most frequent mood logged
+    const sortedMoods = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]);
+    const [topMood, topCount] = sortedMoods[0] || ["Neutral", 0];
+    const topRatio = topCount / entries.length;
+
+    const MOOD_TONE_CONFIG: Record<
+      string,
+      { tone: string; emoji: string; sub: string }
+    > = {
+      Happy: {
+        tone: "Mostly Happy",
+        emoji: "😊",
+        sub: `${Math.round(topRatio * 100)}% Joyful Moments`,
+      },
+      Calm: {
+        tone: "Mostly Calm",
+        emoji: "🌿",
+        sub: `${Math.round(topRatio * 100)}% Serene & Grounded`,
+      },
+      Excited: {
+        tone: "Mostly Excited",
+        emoji: "✨",
+        sub: `${Math.round(topRatio * 100)}% Vibrant Energy`,
+      },
+      Neutral: {
+        tone: "Reflective",
+        emoji: "💭",
+        sub: `${Math.round(topRatio * 100)}% Thoughtful Days`,
+      },
+      Worried: {
+        tone: "Mostly Worried",
+        emoji: "🌧️",
+        sub: `${Math.round(topRatio * 100)}% Processing Care`,
+      },
+      Sad: {
+        tone: "Processing Sadness",
+        emoji: "💧",
+        sub: `${Math.round(topRatio * 100)}% Quiet Reflection`,
+      },
+      Tired: {
+        tone: "Mostly Tired",
+        emoji: "💤",
+        sub: `${Math.round(topRatio * 100)}% Rest & Unwinding`,
+      },
+      Frustrated: {
+        tone: "Processing Stress",
+        emoji: "⚡",
+        sub: `${Math.round(topRatio * 100)}% Releasing Tension`,
+      },
+    };
+
+    if (sortedMoods.length > 1 && topRatio < 0.4) {
+      return {
+        tone: "Balanced Rhythm",
+        emoji: "🌿",
+        sub: `${sortedMoods.length} Varied Emotions`,
+      };
+    }
+
+    return (
+      MOOD_TONE_CONFIG[topMood] || {
+        tone: `Mostly ${topMood}`,
+        emoji: entries[0]?.moodEmoji || "🌸",
+        sub: `${Math.round(topRatio * 100)}% Primary Mood`,
+      }
+    );
   };
 
   const emotionInfo = getEmotionalTone();
