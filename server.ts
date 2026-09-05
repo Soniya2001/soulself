@@ -1131,7 +1131,7 @@ ${journalSnippet}`;
 
       const ai = await getGenAI();
       if (!ai) {
-        const fallback = `Hi ${userDisplayName}, I'm here with you 💜. I'm listening to what you're sharing. Take your time—what's been feeling most present on your mind today?`;
+        const fallback = `I hear you 💜. When you're carrying feelings like this, take a quiet breath. I'm right here with you—tell me more about what's going on.`;
         res.write(`data: ${JSON.stringify({ chunk: fallback })}\n\n`);
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
         return res.end();
@@ -1253,10 +1253,9 @@ ${journalSnippet}`;
 
       // E. Normal AYRA Conversation via Gemini API
       const ai = await getGenAI();
-
       if (!ai) {
         return res.json({
-          reply: `Hi ${userDisplayName}, I'm here with you 💜. I'm listening to what you're sharing. Take your time—what's been feeling most present on your mind today?`,
+          reply: `I hear you 💜. When you're carrying feelings like this, take a quiet breath. I'm right here with you—tell me more about what's going on.`,
           isSafetyResponse: false,
         });
       }
