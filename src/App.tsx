@@ -41,6 +41,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { GeminiReflectionCard } from "./components/GeminiReflectionCard";
 import { JournalCalendar } from "./components/JournalCalendar";
 import { EmotionalJourney } from "./components/EmotionalJourney";
+import { EmotionKPICards } from "./components/EmotionKPICards";
 import { RecentJournals } from "./components/RecentJournals";
 import { DiaryBookOpening } from "./components/DiaryBookOpening";
 import { DiaryWriter } from "./components/DiaryWriter";
@@ -736,6 +737,12 @@ function MainAppContent() {
 
                 {/* 4 Dashboard Statistics Cards */}
                 <DashboardStats entries={entries} />
+
+                {/* Emotion KPI Breakdown Cards (Days logged per emotion) */}
+                <EmotionKPICards
+                  entries={entries}
+                  onSelectMood={(mood) => handleStartNewJournal(mood)}
+                />
 
                 {/* Emotional Journey & Mood Flow */}
                 <EmotionalJourney
