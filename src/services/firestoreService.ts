@@ -295,6 +295,8 @@ export function subscribeToUserAyraConversations(
     return () => {};
   }
 
+  const docPath = `users/${userId}/ayraConversations`;
+
   try {
     const convosRef = collection(db, "users", userId, "ayraConversations");
     const q = query(convosRef, orderBy("updatedAt", "desc"));
@@ -318,14 +320,24 @@ export function subscribeToUserAyraConversations(
         onUpdate(convos);
       },
       (err) => {
-        console.warn("Firestore AYRA conversations subscription error:", err?.message || err);
+        console.error("[AYRA FIRESTORE ERROR]", {
+          code: err?.code || "permission-denied",
+          message: err?.message || String(err),
+          operation: "onSnapshot",
+          path: docPath,
+        });
         if (onError) onError(err);
       }
     );
 
     return unsubscribe;
-  } catch (err) {
-    console.warn("Firestore AYRA conversations subscription init error:", err);
+  } catch (err: any) {
+    console.error("[AYRA FIRESTORE ERROR]", {
+      code: err?.code || "subscription-init-failure",
+      message: err?.message || String(err),
+      operation: "subscribeToUserAyraConversations",
+      path: docPath,
+    });
     onUpdate([]);
     return () => {};
   }
@@ -338,7 +350,29 @@ export async function saveAyraConversationDoc(
   userId: string,
   conversation: AyraConversation
 ): Promise<void> {
-  if (!userId || !conversation || !conversation.id) return;
+  if (!userId) {
+    const err = new Error("Authentication required to save AYRA conversation: userId is empty.");
+    console.error("[AYRA FIRESTORE ERROR]", {
+      code: "unauthenticated",
+      message: err.message,
+      operation: "saveAyraConversationDoc",
+      path: "users/undefined/ayraConversations",
+    });
+    throw err;
+  }
+
+  if (!conversation || !conversation.id) {
+    const err = new Error("Invalid conversation object: conversation.id is required.");
+    console.error("[AYRA FIRESTORE ERROR]", {
+      code: "invalid-argument",
+      message: err.message,
+      operation: "saveAyraConversationDoc",
+      path: `users/${userId}/ayraConversations`,
+    });
+    throw err;
+  }
+
+  const docPath = `users/${userId}/ayraConversations/${conversation.id}`;
 
   try {
     const convoRef = doc(db, "users", userId, "ayraConversations", conversation.id);
@@ -358,8 +392,14 @@ export async function saveAyraConversationDoc(
     const cleanPayload = sanitizeFirestoreData(payload);
 
     await setDoc(convoRef, cleanPayload, { merge: true });
-  } catch (err) {
-    console.warn("Firestore saveAyraConversationDoc error:", err);
+  } catch (err: any) {
+    console.error("[AYRA FIRESTORE ERROR]", {
+      code: err?.code || "setDoc-failure",
+      message: err?.message || String(err),
+      operation: "setDoc",
+      path: docPath,
+    });
+    throw err;
   }
 }
 
@@ -370,9 +410,20 @@ export async function deleteAyraConversationDoc(
   userId: string,
   convoId: string
 ): Promise<void> {
-  if (!userId) throw new Error("Authentication required to delete AYRA conversation.");
-  const convoRef = doc(db, "users", userId, "ayraConversations", convoId);
-  await deleteDoc(convoRef);
+  if (!userId) return;
+  const docPath = `users/${userId}/ayraConversations/${convoId}`;
+  try {
+    const convoRef = doc(db, "users", userId, "ayraConversations", convoId);
+    await deleteDoc(convoRef);
+  } catch (err: any) {
+    console.error("[AYRA FIRESTORE ERROR]", {
+      code: err?.code || "deleteDoc-failure",
+      message: err?.message || String(err),
+      operation: "deleteDoc",
+      path: docPath,
+    });
+    throw err;
+  }
 }
 
 /**

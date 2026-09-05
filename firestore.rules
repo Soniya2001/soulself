@@ -4,10 +4,58 @@ service cloud.firestore {
     // User-isolated namespace: strictly authorized to owner only
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+    // AYRA AI conversations subcollection
+    match /users/{userId}/ayraConversations/{conversationId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User private journals
+    match /users/{userId}/journals/{journalId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Profile subcollection (About Me, Bucket List, Trackers)
+    match /users/{userId}/profile/{profileId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Periodic Reflections (Weekly, Monthly, Yearly)
+    match /users/{userId}/weeklyReflections/{reflectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/monthlyReflections/{reflectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/yearlyReflections/{reflectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Contextual Reflections (Diary & Globe)
+    match /users/{userId}/diaryReflections/{reflectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/globeReflections/{reflectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User notifications
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // General conversations
+    match /users/{userId}/conversations/{conversationId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Catch-all wildcard under user namespace
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // Explicit fallback: reject any unmapped path
