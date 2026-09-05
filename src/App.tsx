@@ -777,23 +777,23 @@ function MainAppContent() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-pink-100/80 bg-white/60 py-6 text-center text-xs text-[#9E83A4] font-sans-ui mt-auto">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="border-t border-pink-100/80 bg-white/80 backdrop-blur-md py-6 text-center text-xs text-[#9E83A4] font-sans-ui mt-auto w-full overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="font-serif-title font-bold text-pink-700 text-sm">SoulSelf</span>
+            <span className="font-serif font-bold text-pink-700 text-sm">SoulSelf</span>
             <span>•</span>
             <span>Your Personal Mindful Sanctuary</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:pr-36 text-purple-900/60">
             <button
               onClick={() => setShowSplash(true)}
-              className="text-pink-600 hover:text-pink-700 font-medium cursor-pointer"
+              className="text-pink-600 hover:text-pink-700 font-medium cursor-pointer transition-colors"
             >
               Replay Intro 🌸
             </button>
             <span>•</span>
-            <span>Protected by Firestore Security Rules</span>
+            <span>Protected Sanctuary</span>
           </div>
         </div>
       </footer>
